@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OffertePilot – Offertes opvolgen</title>
+<style>
+  :root {
+    --bg: #f3f5f9;
+    --card: #ffffff;
+    --text: #1b2433;
+    --muted: #6a7488;
+    --line: #e2e6ee;
+    --primary: #1f5eff;
+    --primary-dark: #1647c4;
+    --nieuw: #1f5eff;
+    --opvolgen: #d98200;
+    --gewonnen: #178a4a;
+    --verloren: #c63a3a;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(20, 30, 60, 0.08), 0 4px 14px rgba(20, 30, 60, 0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    background: #0f1b3d;
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .logo { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; color: #6f9bff; }
+  .subtitle { font-size: 0.85rem; color: #aab6d6; }
+  .badge-demo {
+    background: #ffd54a; color: #5a4300; font-size: 0.75rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px;
+  }
+  main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 24px;
+  }
+
+  /* Melding bovenaan */
+  .alert {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px;
+    font-size: 0.95rem; box-shadow: var(--shadow);
+  }
+  .alert.warn { background: #fff4e0; border: 1px solid #f1c27a; color: #7a4a00; }
+  .alert.ok { background: #e6f6ed; border: 1px solid #a8dcbd; color: #146a3a; }
+  .alert strong { font-weight: 700; }
+  .alert .btn-alert { background: var(--opvolgen); color: #fff; }
+  .alert .btn-alert:hover { background: #b86d00; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; border-left: 5px solid var(--primary); }
+  .stat.warn { border-left-color: var(--opvolgen); }
+  .stat.good { border-left-color: var(--gewonnen); }
+  .stat.info { border-left-color: #7a4dff; }
+  .stat.urgent { border-left-color: var(--verloren); background: #fff7f7; }
+  .stat.clickable { cursor: pointer; transition: transform 0.1s; }
+  .stat.clickable:hover { transform: translateY(-2px); }
+  .stat.clickable:focus-visible { outline: 3px solid #b9ccff; }
+  .stat .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat .value { font-size: 1.7rem; font-weight: 700; margin-top: 4px; }
+  .stat .hint { font-size: 0.8rem; color: var(--muted); }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { form { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 0.82rem; font-weight: 600; }
+  input, select {
+    font: inherit; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: var(--text); width: 100%;
+  }
+  input:focus, select:focus { outline: 2px solid #b9ccff; border-color: var(--primary); }
+  button {
+    font: inherit; cursor: pointer; border: none; border-radius: 8px;
+    padding: 9px 16px; font-weight: 600;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-ghost { background: #eef1f7; color: var(--text); }
+  .btn-ghost:hover { background: #e1e6f0; }
+  .btn-small { padding: 5px 10px; font-size: 0.78rem; }
+  .btn-win { background: #e3f5ea; color: var(--gewonnen); }
+  .btn-win:hover { background: #cdeedb; }
+  .btn-lose { background: #fbe7e7; color: var(--verloren); }
+  .btn-lose:hover { background: #f6d2d2; }
+  .btn-del { background: transparent; color: var(--verloren); }
+  .btn-del:hover { background: #fbe7e7; }
+  .btn-danger { background: var(--verloren); color: #fff; }
+  .btn-danger:hover { background: #a82e2e; }
+  .error { color: var(--verloren); font-size: 0.85rem; min-height: 1.2em; grid-column: 1 / -1; }
+
+  .followups { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; }
+  .fu-item {
+    border: 1px solid var(--line); border-left: 4px solid var(--opvolgen);
+    border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .fu-item.late { border-left-color: var(--verloren); }
+  .fu-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .fu-name { font-weight: 600; }
+  .fu-sub { font-size: 0.82rem; color: var(--muted); }
+  .fu-amount { font-weight: 700; }
+  .fu-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag-late { color: var(--verloren); font-weight: 600; }
+  .tag-today { color: var(--opvolgen); font-weight: 600; }
+  .empty { color: var(--muted); text-align: center; padding: 22px 10px; }
+
+  .toolbar { display: grid; grid-template-columns: 2fr 1.3fr 1.3fr auto; gap: 12px; margin-bottom: 14px; align-items: end; }
+  @media (max-width: 860px) { .toolbar { grid-template-columns: 1fr 1fr; } }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 960px; }
+  th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--line); font-size: 0.9rem; vertical-align: middle; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  td.num, th.num { text-align: right; }
+  tbody tr:hover { background: #f8f9fc; }
+  tbody tr.row-late { background: #fff5f5; box-shadow: inset 4px 0 0 var(--verloren); }
+  tbody tr.row-today { background: #fffaf0; box-shadow: inset 4px 0 0 var(--opvolgen); }
+  tbody tr.row-late:hover { background: #ffecec; }
+  tbody tr.row-today:hover { background: #fff3dc; }
+  .cust-name { font-weight: 600; }
+  .cust-sub { font-size: 0.8rem; color: var(--muted); }
+  .due-badge {
+    display: inline-block; margin-top: 3px; padding: 2px 8px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .due-late { background: #fbe4e4; color: var(--verloren); }
+  .due-today { background: #fff0d6; color: var(--opvolgen); }
+  .status-select { font-weight: 600; padding: 6px 8px; border-radius: 999px; width: auto; border: 1px solid transparent; }
+  .status-Nieuw { background: #e5edff; color: var(--nieuw); }
+  .status-Opvolgen { background: #fff0d6; color: var(--opvolgen); }
+  .status-Gewonnen { background: #e0f5e9; color: var(--gewonnen); }
+  .status-Verloren { background: #fbe4e4; color: var(--verloren); }
+  .row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .count { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 10px 0 30px; }
+
+  /* Bevestigingsvenster voor verwijderen */
+  dialog {
+    border: none; border-radius: var(--radius); padding: 24px; max-width: 440px; width: calc(100% - 32px);
+    box-shadow: 0 10px 40px rgba(10, 20, 50, 0.3); color: var(--text);
+  }
+  dialog::backdrop { background: rgba(15, 27, 61, 0.55); }
+  dialog h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  dialog p { margin: 0 0 8px; }
+  dialog .dlg-detail { background: #f3f5f9; border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin: 12px 0; }
+  dialog .dlg-warn { color: var(--verloren); font-size: 0.88rem; }
+  dialog .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">OffertePilot</div>
+    <div class="subtitle">Nooit meer een offerte vergeten op te volgen · Van der Heijden Installatietechniek (fictief)</div>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <span class="badge-demo">DEMO · fictieve gegevens</span>
+    <button class="btn-ghost btn-small" id="resetBtn" type="button">Testgegevens herstellen</button>
+  </div>
+</header>
+
+<main>
+  <div id="alertBar" role="status" aria-live="polite"></div>
+
+  <section class="stats" id="stats"></section>
+
+  <div class="layout">
+    <section class="card">
+      <h2>Opvolgen vandaag of te laat</h2>
+      <div class="followups" id="followups"></div>
+    </section>
+
+    <section class="card">
+      <h2>Nieuwe offerte toevoegen</h2>
+      <form id="quoteForm" novalidate>
+        <div class="field">
+          <label for="klantnaam">Klantnaam *</label>
+          <input id="klantnaam" type="text" placeholder="bijv. Jan de Vries">
+        </div>
+        <div class="field">
+          <label for="bedrijfsnaam">Bedrijfsnaam *</label>
+          <input id="bedrijfsnaam" type="text" placeholder="bijv. De Vries Bouw B.V.">
+        </div>
+        <div class="field full">
+          <label for="email">E-mailadres *</label>
+          <input id="email" type="email" placeholder="naam@bedrijf.nl">
+        </div>
+        <div class="field">
+          <label for="bedrag">Offertebedrag (€) *</label>
+          <input id="bedrag" type="number" min="0" step="0.01" placeholder="bijv. 4850">
+        </div>
+        <div class="field">
+          <label for="offertedatum">Offertedatum *</label>
+          <input id="offertedatum" type="date">
+        </div>
+        <div class="field full">
+          <label for="opvolgdatum">Opvolgdatum *</label>
+          <input id="opvolgdatum" type="date">
+        </div>
+        <div class="error" id="formError"></div>
+        <div class="field full">
+          <button type="submit" class="btn-primary">Offerte toevoegen</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <section class="card" id="tabelKaart">
+    <h2>Alle offertes</h2>
+    <div class="toolbar">
+      <div class="field">
+        <label for="zoek">Zoeken</label>
+        <input id="zoek" type="search" placeholder="Zoek op naam, bedrijf of e-mail…">
+      </div>
+      <div class="field">
+        <label for="filterStatus">Filter</label>
+        <select id="filterStatus">
+          <option value="Alle">Alle statussen</option>
+          <option value="ActieNodig">⚠ Opvolging nodig (vandaag of te laat)</option>
+          <option value="Nieuw">Nieuw</option>
+          <option value="Opvolgen">Opvolgen</option>
+          <option value="Gewonnen">Gewonnen</option>
+          <option value="Verloren">Verloren</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sorteer">Sorteren op</label>
+        <select id="sorteer">
+          <option value="urgent">Meest urgent eerst</option>
+          <option value="opvolg">Opvolgdatum (eerst)</option>
+          <option value="bedrag">Bedrag (hoogste eerst)</option>
+          <option value="nieuwste">Offertedatum (nieuwste)</option>
+        </select>
+      </div>
+      <div class="field">
+        <button type="button" class="btn-ghost" id="wisFilters">Filters wissen</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Klant</th>
+            <th>E-mail</th>
+            <th class="num">Bedrag</th>
+            <th>Offertedatum</th>
+            <th>Opvolgdatum</th>
+            <th>Status</th>
+            <th>Acties</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="tableEmpty" style="display:none;">Geen offertes gevonden.</div>
+    <div class="count" id="count"></div>
+  </section>
+</main>
+
+<footer>OffertePilot demo · gegevens worden alleen in deze browser bewaard (localStorage)</footer>
+
+<!-- Bevestigingsvenster verwijderen -->
+<dialog id="deleteDialog" aria-labelledby="dlgTitel">
+  <h3 id="dlgTitel">Offerte definitief verwijderen?</h3>
+  <p>Je staat op het punt deze offerte te verwijderen:</p>
+  <div class="dlg-detail" id="dlgDetail"></div>
+  <p class="dlg-warn">Dit kan niet ongedaan worden gemaakt.</p>
+  <div class="dlg-actions">
+    <button type="button" class="btn-ghost" id="dlgCancel" autofocus>Annuleren</button>
+    <button type="button" class="btn-danger" id="dlgConfirm">Definitief verwijderen</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  // Let op: deze sleutel is bewust ongewijzigd, zodat bestaande gegevens behouden blijven.
+  var STORAGE_KEY = "offertepilot.demo.v1";
+  var STATUSSEN = ["Nieuw", "Opvolgen", "Gewonnen", "Verloren"];
+  var offertes = [];
+  var teVerwijderenId = null;
+
+  /* ---------- Hulpfuncties voor datums ---------- */
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function naarIso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function dagenVanNu(n) { var d = new Date(); d.setDate(d.getDate() + n); return naarIso(d); }
+  function vandaag() { return naarIso(new Date()); }
+  function verschilInDagen(iso1, iso2) {
+    var a = iso1.split("-"), b = iso2.split("-");
+    var d1 = Date.UTC(+a[0], +a[1] - 1, +a[2]);
+    var d2 = Date.UTC(+b[0], +b[1] - 1, +b[2]);
+    return Math.round((d1 - d2) / 86400000);
+  }
+  function datumNL(iso) {
+    if (!iso) return "";
+    var p = iso.split("-");
+    return p[2] + "-" + p[1] + "-" + p[0];
+  }
+  function dagenTekst(n) { return n + (n === 1 ? " dag" : " dagen"); }
+  var euro = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  var euroExact = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
+  function bedragTekst(n) { return (n % 1 === 0 ? euro : euroExact).format(n); }
+
+  /* ---------- Veilig tekst tonen ---------- */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ---------- Testgegevens ---------- */
+  function testgegevens() {
+    var rijen = [
+      ["Pieter van Dijk", "Van Dijk Vastgoed", "p.vandijk@vandijkvastgoed.example", 14850, -12, -2, "Opvolgen"],
+      ["Sanne Bakker", "Bakker & Zn Bakkerij", "sanne@bakkerenzn.example", 6250, -9, 0, "Nieuw"],
+      ["Mohamed El Amrani", "Amrani Horeca B.V.", "m.elamrani@amranihoreca.example", 23900, -15, -5, "Opvolgen"],
+      ["Lotte Jansen", "Jansen Tandartspraktijk", "lotte@jansentandarts.example", 8400, -6, 1, "Nieuw"],
+      ["Henk Visser", "Visser Fietsen", "henk@visserfietsen.example", 3150, -20, -10, "Opvolgen"],
+      ["Fatima Yilmaz", "Yilmaz Supermarkt", "fatima@yilmazsuper.example", 31200, -30, -14, "Gewonnen"],
+      ["Willem de Groot", "De Groot Transport", "w.degroot@degroottransport.example", 12700, -25, -11, "Verloren"],
+      ["Emma Smit", "Smit Architecten", "emma@smitarchitecten.example", 5980, -3, 4, "Nieuw"],
+      ["Bram Mulder", "Mulder Loodgieters", "bram@mulderloodgieters.example", 18450, -8, 3, "Opvolgen"],
+      ["Anouk Peters", "Peters Kinderopvang", "anouk@peterskinderopvang.example", 9650, -18, -8, "Gewonnen"],
+      ["Joris Hendriks", "Hendriks Tuincentrum", "joris@hendrikstuin.example", 4275, -2, 6, "Nieuw"],
+      ["Ilse Kuipers", "Kuipers Sportschool", "ilse@kuipersgym.example", 15300, -14, -3, "Opvolgen"]
+    ];
+    return rijen.map(function (r, i) {
+      return {
+        id: "test-" + i,
+        klantnaam: r[0], bedrijfsnaam: r[1], email: r[2], bedrag: r[3],
+        offertedatum: dagenVanNu(r[4]), opvolgdatum: dagenVanNu(r[5]), status: r[6]
+      };
+    });
+  }
+
+  /* ---------- Opslaan en laden ---------- */
+  function opslaan() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(offertes)); }
+    catch (e) { /* opslag niet beschikbaar: app blijft werken, maar bewaart niets */ }
+  }
+  function laden() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (Array.isArray(data)) { offertes = data; return; }
+      }
+    } catch (e) { /* ga door met testgegevens */ }
+    offertes = testgegevens();
+    opslaan();
+  }
+
+  /* ---------- Onderdelen op de pagina ---------- */
+  var el = {
+    alertBar: document.getElementById("alertBar"),
+    stats: document.getElementById("stats"),
+    followups: document.getElementById("followups"),
+    tbody: document.getElementById("tbody"),
+    tableEmpty: document.getElementById("tableEmpty"),
+    count: document.getElementById("count"),
+    zoek: document.getElementById("zoek"),
+    filterStatus: document.getElementById("filterStatus"),
+    sorteer: document.getElementById("sorteer"),
+    form: document.getElementById("quoteForm"),
+    formError: document.getElementById("formError"),
+    dialog: document.getElementById("deleteDialog"),
+    dlgDetail: document.getElementById("dlgDetail")
+  };
+
+  function isOpen(o) { return o.status === "Nieuw" || o.status === "Opvolgen"; }
+  function heeftActieNodig(o) { return isOpen(o) && o.opvolgdatum <= vandaag(); }
+  function actieLijst() { return offertes.filter(heeftActieNodig); }
+
+  /* ---------- Melding bovenaan ---------- */
+  function renderAlert() {
+    var v = vandaag();
+    var lijst = actieLijst();
+    if (!lijst.length) {
+      el.alertBar.innerHTML = '<div class="alert ok"><span>✅ <strong>Alles bijgewerkt.</strong> Er zijn geen offertes die vandaag opgevolgd moeten worden.</span></div>';
+      return;
+    }
+    var teLaat = lijst.filter(function (o) { return o.opvolgdatum < v; }).length;
+    var vandaagN = lijst.length - teLaat;
+    var delen = [];
+    if (teLaat) delen.push(teLaat + " te laat");
+    if (vandaagN) delen.push(vandaagN + " vandaag");
+    el.alertBar.innerHTML =
+      '<div class="alert warn"><span>⚠ <strong>' + lijst.length + (lijst.length === 1 ? " offerte moet" : " offertes moeten") +
+      ' worden opgevolgd</strong> (' + delen.join(", ") + ').</span>' +
+      '<button type="button" class="btn-alert btn-small" data-actie="toonActie">Toon deze offertes</button></div>';
+  }
+
+  /* ---------- Dashboardkaarten ---------- */
+  function renderStats() {
+    var open = offertes.filter(isOpen);
+    var openWaarde = open.reduce(function (s, o) { return s + o.bedrag; }, 0);
+    var teDoen = actieLijst();
+    var gewonnen = offertes.filter(function (o) { return o.status === "Gewonnen"; });
+    var verloren = offertes.filter(function (o) { return o.status === "Verloren"; });
+    var gewonnenWaarde = gewonnen.reduce(function (s, o) { return s + o.bedrag; }, 0);
+    var afgerond = gewonnen.length + verloren.length;
+    var winst = afgerond ? Math.round((gewonnen.length / afgerond) * 100) + "%" : "–";
+
+    el.stats.innerHTML =
+      kaart("", "Openstaande offertes", open.length, bedragTekst(openWaarde) + " in de pijplijn") +
+      '<div class="stat clickable ' + (teDoen.length ? "urgent" : "warn") + '" data-actie="toonActie" role="button" tabindex="0">' +
+        '<div class="label">Opvolging nodig</div>' +
+        '<div class="value">' + teDoen.length + '</div>' +
+        '<div class="hint">' + (teDoen.length ? "Vandaag of te laat · klik om te tonen" : "Alles bijgewerkt") + '</div></div>' +
+      kaart("good", "Gewonnen omzet", bedragTekst(gewonnenWaarde), gewonnen.length + " gewonnen offertes") +
+      kaart("info", "Winstpercentage", winst, afgerond ? gewonnen.length + " van " + afgerond + " afgerond" : "Nog geen afgeronde offertes");
+  }
+  function kaart(klasse, label, waarde, hint) {
+    return '<div class="stat ' + klasse + '"><div class="label">' + esc(label) + '</div>' +
+           '<div class="value">' + esc(waarde) + '</div><div class="hint">' + esc(hint) + '</div></div>';
+  }
+
+  /* ---------- Lijst: opvolgen vandaag of eerder ---------- */
+  function renderFollowups() {
+    var v = vandaag();
+    var lijst = actieLijst().sort(function (a, b) { return a.opvolgdatum < b.opvolgdatum ? -1 : 1; });
+
+    if (!lijst.length) {
+      el.followups.innerHTML = '<div class="empty">🎉 Geen openstaande opvolgingen. Goed bezig!</div>';
+      return;
+    }
+    el.followups.innerHTML = lijst.map(function (o) {
+      var dagenTeLaat = verschilInDagen(v, o.opvolgdatum);
+      var tag = dagenTeLaat === 0
+        ? '<span class="tag-today">Vandaag opvolgen</span>'
+        : '<span class="tag-late">' + dagenTekst(dagenTeLaat) + ' te laat</span>';
+      return '<div class="fu-item ' + (dagenTeLaat > 0 ? "late" : "") + '">' +
+        '<div class="fu-top"><div><div class="fu-name">' + esc(o.klantnaam) + '</div>' +
+        '<div class="fu-sub">' + esc(o.bedrijfsnaam) + ' · ' + esc(o.email) + '</div></div>' +
+        '<div style="text-align:right"><div class="fu-amount">' + bedragTekst(o.bedrag) + '</div>' + tag + '</div></div>' +
+        '<div class="fu-actions">' +
+        '<button type="button" class="btn-small btn-win" data-actie="gewonnen" data-id="' + esc(o.id) + '">Gewonnen</button>' +
+        '<button type="button" class="btn-small btn-lose" data-actie="verloren" data-id="' + esc(o.id) + '">Verloren</button>' +
+        '<button type="button" class="btn-small btn-ghost" data-actie="uitstellen" data-id="' + esc(o.id) + '">Opvolgen over 7 dagen</button>' +
+        '</div></div>';
+    }).join("");
+  }
+
+  /* ---------- Tabel met zoeken, filteren en sorteren ---------- */
+  function gefilterdeLijst() {
+    var q = el.zoek.value.trim().toLowerCase();
+    var filter = el.filterStatus.value;
+    var lijst = offertes.filter(function (o) {
+      if (filter === "ActieNodig") { if (!heeftActieNodig(o)) return false; }
+      else if (filter !== "Alle" && o.status !== filter) return false;
+      if (!q) return true;
+      return (o.klantnaam + " " + o.bedrijfsnaam + " " + o.email).toLowerCase().indexOf(q) !== -1;
+    });
+    var sort = el.sorteer.value;
+    lijst.sort(function (a, b) {
+      if (sort === "bedrag") return b.bedrag - a.bedrag;
+      if (sort === "nieuwste") return a.offertedatum < b.offertedatum ? 1 : -1;
+      if (sort === "urgent") {
+        // Open offertes eerst, daarbinnen de oudste opvolgdatum bovenaan (bij gelijke datum: hoogste bedrag eerst).
+        // Gewonnen en verloren offertes komen onderaan.
+        var ao = isOpen(a), bo = isOpen(b);
+        if (ao !== bo) return ao ? -1 : 1;
+        if (ao) {
+          if (a.opvolgdatum !== b.opvolgdatum) return a.opvolgdatum < b.opvolgdatum ? -1 : 1;
+          return b.bedrag - a.bedrag;
+        }
+        return a.offertedatum < b.offertedatum ? 1 : -1;
+      }
+      return a.opvolgdatum < b.opvolgdatum ? -1 : 1;
+    });
+    return lijst;
+  }
+
+  function renderTable() {
+    var lijst = gefilterdeLijst();
+    var v = vandaag();
+    el.tbody.innerHTML = lijst.map(function (o) {
+      var open = isOpen(o);
+      var verschil = verschilInDagen(v, o.opvolgdatum);   // > 0 = te laat, 0 = vandaag
+      var teLaat = open && verschil > 0;
+      var vandaagDoen = open && verschil === 0;
+      var rijKlasse = teLaat ? "row-late" : (vandaagDoen ? "row-today" : "");
+      var badge = teLaat
+        ? '<div><span class="due-badge due-late">⚠ ' + dagenTekst(verschil) + ' te laat</span></div>'
+        : (vandaagDoen ? '<div><span class="due-badge due-today">Vandaag opvolgen</span></div>' : "");
+
+      var opties = STATUSSEN.map(function (s) {
+        return '<option value="' + s + '"' + (s === o.status ? " selected" : "") + '>' + s + '</option>';
+      }).join("");
+
+      var id = esc(o.id);
+      var acties = open
+        ? '<button type="button" class="btn-small btn-win" data-actie="gewonnen" data-id="' + id + '">Gewonnen</button>' +
+          '<button type="button" class="btn-small btn-lose" data-actie="verloren" data-id="' + id + '">Verloren</button>'
+        : '<button type="button" class="btn-small btn-ghost" data-actie="heropenen" data-id="' + id + '">Heropenen</button>';
+
+      return '<tr class="' + rijKlasse + '">' +
+        '<td><div class="cust-name">' + esc(o.klantnaam) + '</div><div class="cust-sub">' + esc(o.bedrijfsnaam) + '</div></td>' +
+        '<td>' + esc(o.email) + '</td>' +
+        '<td class="num"><strong>' + bedragTekst(o.bedrag) + '</strong></td>' +
+        '<td>' + datumNL(o.offertedatum) + '</td>' +
+        '<td>' + datumNL(o.opvolgdatum) + badge + '</td>' +
+        '<td><select class="status-select status-' + o.status + '" data-id="' + id + '" aria-label="Status wijzigen">' + opties + '</select></td>' +
+        '<td><div class="row-actions">' + acties +
+        '<button type="button" class="btn-small btn-del" data-actie="verwijder" data-id="' + id + '">Verwijderen</button></div></td>' +
+        '</tr>';
+    }).join("");
+    el.tableEmpty.style.display = lijst.length ? "none" : "block";
+    el.count.textContent = lijst.length + " van " + offertes.length + " offertes getoond";
+  }
+
+  function renderAlles() { renderAlert(); renderStats(); renderFollowups(); renderTable(); }
+
+  /* ---------- Acties ---------- */
+  function zoekOfferte(id) {
+    for (var i = 0; i < offertes.length; i++) if (offertes[i].id === id) return offertes[i];
+    return null;
+  }
+
+  function toonActieNodig() {
+    el.zoek.value = "";
+    el.filterStatus.value = "ActieNodig";
+    el.sorteer.value = "urgent";
+    renderTable();
+    document.getElementById("tabelKaart").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function verwijderNu(id) {
+    offertes = offertes.filter(function (x) { return x.id !== id; });
+    opslaan();
+    renderAlles();
+  }
+
+  function vraagVerwijderen(o) {
+    if (typeof el.dialog.showModal === "function") {
+      teVerwijderenId = o.id;
+      el.dlgDetail.innerHTML = "<strong>" + esc(o.klantnaam) + "</strong> · " + esc(o.bedrijfsnaam) +
+        "<br>" + bedragTekst(o.bedrag) + " · opvolgdatum " + datumNL(o.opvolgdatum);
+      el.dialog.showModal();
+    } else if (confirm("Offerte van " + o.klantnaam + " definitief verwijderen? Dit kan niet ongedaan worden gemaakt.")) {
+      verwijderNu(o.id);
+    }
+  }
+
+  function behandelKlik(e) {
+    var knop = e.target.closest("button[data-actie]");
+    if (!knop) return;
+    var id = knop.getAttribute("data-id");
+    var actie = knop.getAttribute("data-actie");
+    var o = zoekOfferte(id);
+    if (!o) return;
+
+    if (actie === "verwijder") { vraagVerwijderen(o); return; }
+
+    if (actie === "gewonnen") o.status = "Gewonnen";
+    else if (actie === "verloren") o.status = "Verloren";
+    else if (actie === "heropenen") o.status = "Opvolgen";
+    else if (actie === "uitstellen") { o.opvolgdatum = dagenVanNu(7); o.status = "Opvolgen"; }
+    opslaan();
+    renderAlles();
+  }
+  el.followups.addEventListener("click", behandelKlik);
+  el.tbody.addEventListener("click", behandelKlik);
+
+  el.tbody.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("status-select")) return;
+    var o = zoekOfferte(e.target.getAttribute("data-id"));
+    if (!o) return;
+    o.status = e.target.value;
+    opslaan();
+    renderAlles();
+  });
+
+  // Melding en dashboardkaart: toon alleen offertes die opgevolgd moeten worden
+  el.alertBar.addEventListener("click", function (e) {
+    if (e.target.closest('[data-actie="toonActie"]')) toonActieNodig();
+  });
+  el.stats.addEventListener("click", function (e) {
+    if (e.target.closest('[data-actie="toonActie"]')) toonActieNodig();
+  });
+  el.stats.addEventListener("keydown", function (e) {
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest('[data-actie="toonActie"]')) {
+      e.preventDefault();
+      toonActieNodig();
+    }
+  });
+
+  // Bevestigingsvenster
+  document.getElementById("dlgCancel").addEventListener("click", function () {
+    teVerwijderenId = null;
+    el.dialog.close();
+  });
+  document.getElementById("dlgConfirm").addEventListener("click", function () {
+    var id = teVerwijderenId;
+    teVerwijderenId = null;
+    el.dialog.close();
+    if (id) verwijderNu(id);
+  });
+  el.dialog.addEventListener("close", function () { teVerwijderenId = null; });
+
+  [el.zoek, el.filterStatus, el.sorteer].forEach(function (x) {
+    x.addEventListener("input", renderTable);
+  });
+  document.getElementById("wisFilters").addEventListener("click", function () {
+    el.zoek.value = "";
+    el.filterStatus.value = "Alle";
+    el.sorteer.value = "urgent";
+    renderTable();
+  });
+
+  /* ---------- Formulier ---------- */
+  function zetStandaardDatums() {
+    document.getElementById("offertedatum").value = vandaag();
+    document.getElementById("opvolgdatum").value = dagenVanNu(7);
+  }
+
+  el.form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var klantnaam = document.getElementById("klantnaam").value.trim();
+    var bedrijfsnaam = document.getElementById("bedrijfsnaam").value.trim();
+    var email = document.getElementById("email").value.trim();
+    var bedragRaw = document.getElementById("bedrag").value;
+    var offertedatum = document.getElementById("offertedatum").value;
+    var opvolgdatum = document.getElementById("opvolgdatum").value;
+    var bedrag = parseFloat(bedragRaw);
+
+    var fout = "";
+    if (!klantnaam || !bedrijfsnaam || !email || bedragRaw === "" || !offertedatum || !opvolgdatum) {
+      fout = "Vul alle velden in.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fout = "Dit e-mailadres lijkt niet te kloppen.";
+    } else if (isNaN(bedrag) || bedrag < 0) {
+      fout = "Vul een geldig bedrag in (0 of hoger).";
+    } else if (opvolgdatum < offertedatum) {
+      fout = "De opvolgdatum mag niet vóór de offertedatum liggen.";
+    }
+    if (fout) { el.formError.textContent = fout; return; }
+
+    offertes.push({
+      id: "q-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
+      klantnaam: klantnaam, bedrijfsnaam: bedrijfsnaam, email: email,
+      bedrag: bedrag, offertedatum: offertedatum, opvolgdatum: opvolgdatum,
+      status: "Nieuw"
+    });
+    opslaan();
+    el.form.reset();
+    zetStandaardDatums();
+    el.formError.textContent = "";
+    renderAlles();
+  });
+
+  /* ---------- Testgegevens herstellen ---------- */
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Alle huidige gegevens vervangen door de testgegevens?")) return;
+    offertes = testgegevens();
+    opslaan();
+    renderAlles();
+  });
+
+  /* ---------- Start ---------- */
+  laden();
+  zetStandaardDatums();
+  renderAlles();
+})();
+</script>
+</body>
+</html>
