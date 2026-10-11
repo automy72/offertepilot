@@ -3,426 +3,776 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#193653">
 <title>OffertePilot – Offertes opvolgen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23168C83'/%3E%3Cpath d='M24 8 8 14.5l6 2.2 2.2 6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
+  /* =====================================================================
+     DESIGN SYSTEM
+     ===================================================================== */
   :root {
-    /* Vaste kleuridentiteit */
-    --navy: #142B4A;
-    --petrol: #087E8B;
-    --petrol-donker: #066975;
-    --bg: #F7F5F0;
+    /* Merkkleuren */
+    --navy: #193653;
+    --petrol: #168C83;              /* accenten, iconen, actieve navigatie, focus */
+    --petrol-knop: #128078;         /* vulling van primaire knoppen (witte tekst haalt hier 4,8:1) */
+    --petrol-knop-hover: #0E6B64;
+    --petrol-knop-actief: #0B5A54;
+    --petrol-tekst: #0F6F68;        /* petrol als tekstkleur op lichte vlakken */
+    --petrol-tint: #E1F2F0;
+    --creme: #FFF8EE;
     --wit: #FFFFFF;
-    --goud: #D7A64B;
-    --groen: #247A55;
-    --amber: #B17B20;
-    --rood: #B93838;
-    --tekst: #202B38;
+    --tekst: #293746;
+    --tekst-zacht: #5E6B7A;
+    --lijn: #EBE3D3;
+    --lijn-sterk: #DAD1BE;
 
-    /* Afgeleide tinten voor achtergronden en kleine tekst (voor leesbaarheid) */
-    --tekst-zacht: #5A6675;
-    --lijn: #E6E1D5;
-    --lijn-sterk: #D5CFC0;
-    --navy-tint: #E7ECF3;
+    /* Statuskleuren */
+    --blauw: #1D5FB8;               /* Verstuurd */
+    --blauw-tint: #E4EEFB;
+    --blauw-rand: #BCD3F2;
+    --amber: #B17B20;               /* Opvolgen */
+    --amber-tint: #FBEFD3;
+    --amber-tekst: #7D5513;
+    --amber-rand: #E9CF9A;
+    --groen: #247A55;               /* Akkoord */
     --groen-tint: #E4F2EA;
     --groen-tekst: #1B5E41;
-    --amber-tint: #FBF1DC;
-    --amber-tekst: #7D5513;
+    --groen-rand: #BFE0CE;
+    --afgewezen: #B4232F;           /* Afgewezen */
+    --afgewezen-tint: #FCE4E4;
+    --afgewezen-rand: #EFB5B9;
+
+    /* Waarschuwing "Te laat" (aparte vorm: vol en vierkant, nooit een statuslabel) */
+    --rood: #B93838;
     --rood-tint: #FBEAEA;
     --rood-tekst: #962C2C;
-    --neutraal-tint: #EDE9DF;
-    --neutraal-tekst: #4F5B6A;
+    --rood-rand: #EBC3C3;
 
-    --radius: 14px;
-    --schaduw: 0 1px 2px rgba(20, 43, 74, 0.05), 0 8px 24px rgba(20, 43, 74, 0.05);
+    /* Vormen en diepte */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --sh-1: 0 1px 2px rgba(25, 54, 83, 0.06);
+    --sh-2: 0 1px 3px rgba(25, 54, 83, 0.06), 0 6px 18px rgba(25, 54, 83, 0.06);
+    --sh-3: 0 12px 32px rgba(25, 54, 83, 0.2);
+    --focus: rgba(22, 140, 131, 0.5);
+
+    --sidebar-b: 248px;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg);
-    color: var(--tekst);
+    font-size: 15px;
     line-height: 1.5;
+    background: var(--creme);
+    color: var(--tekst);
     -webkit-font-smoothing: antialiased;
   }
-  [id="sectie-overzicht"], [id="sectie-opvolgen"], [id="sectie-nieuw"], [id="tabelKaart"] { scroll-margin-top: 110px; }
+  h1, h2, h3, p { margin: 0; }
+  [hidden] { display: none !important; }
 
-  /* ---------- Navigatie ---------- */
-  .app-header {
-    background: var(--navy);
-    color: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: 0 4px 16px rgba(20, 43, 74, 0.18);
+  /* Minder beweging als de gebruiker dat wil */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
-  .header-inner {
-    max-width: 1200px; margin: 0 auto; padding: 0 24px;
-    display: flex; align-items: center; gap: 28px; min-height: 66px;
+
+  /* ---------- Iconen ---------- */
+  .ico {
+    width: 20px; height: 20px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
   }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark { width: 11px; height: 11px; background: var(--goud); transform: rotate(45deg); border-radius: 2px; flex: none; }
-  .brand-name { font-size: 1.2rem; font-weight: 500; letter-spacing: -0.2px; color: #fff; }
+
+  /* =====================================================================
+     PAGINA-INDELING
+     ===================================================================== */
+  .app { display: grid; grid-template-columns: var(--sidebar-b) minmax(0, 1fr); min-height: 100vh; }
+
+  /* ---------- Zijbalk ---------- */
+  .sidebar {
+    background: var(--navy); color: #EAF0F6;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    display: flex; flex-direction: column; padding: 20px 14px;
+  }
+  .sb-brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 24px; }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--petrol); color: #fff;
+    display: grid; place-items: center; flex: none;
+  }
+  .logo-mark .ico { width: 18px; height: 18px; }
+  .brand-name { font-size: 1.15rem; font-weight: 500; color: #fff; letter-spacing: -0.2px; }
   .brand-name b { font-weight: 800; }
+  .sb-label {
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    color: rgba(234, 240, 246, 0.55); padding: 0 12px 8px;
+  }
+  .sb-nav { display: flex; flex-direction: column; gap: 4px; }
+  .sb-nav a {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px; text-decoration: none;
+    font-size: 0.92rem; font-weight: 600; color: rgba(234, 240, 246, 0.82);
+    transition: background 0.12s, color 0.12s;
+  }
+  .sb-nav a:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .sb-nav a.actief { background: rgba(22, 140, 131, 0.24); color: #fff; }
+  .sb-nav a.actief .ico { color: #7FD6CE; }
+  .sb-nav a.actief::before {
+    content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 4px;
+    border-radius: 0 4px 4px 0; background: var(--petrol);
+  }
+  .sb-nav a:focus-visible { outline: 3px solid rgba(247, 245, 240, 0.7); outline-offset: 1px; }
+  .nav-count {
+    margin-left: auto; min-width: 22px; text-align: center;
+    font-size: 0.72rem; font-weight: 700; line-height: 1.5; padding: 0 7px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14); color: #fff;
+  }
+  .nav-count.telaat { background: var(--rood); color: #fff; }
+  .nav-count.vandaag { background: var(--amber-tint); color: var(--amber-tekst); }
+  .sb-foot { margin-top: auto; padding-top: 18px; }
+  .demo-kaart {
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px; padding: 12px; font-size: 0.8rem; color: rgba(234, 240, 246, 0.82);
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+  }
   .badge-demo {
-    border: 1px solid rgba(247, 245, 240, 0.4); color: rgba(247, 245, 240, 0.9);
-    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em;
-    padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(234, 240, 246, 0.45); color: #fff;
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.12em; padding: 1px 8px; border-radius: 999px;
   }
-  .nav { display: flex; gap: 4px; flex: 1; }
-  .nav a {
-    color: rgba(247, 245, 240, 0.82); text-decoration: none; font-weight: 600; font-size: 0.9rem;
-    padding: 8px 14px; border-radius: 8px; white-space: nowrap; transition: background 0.15s, color 0.15s;
-  }
-  .nav a:hover { color: #fff; background: rgba(255, 255, 255, 0.09); }
-  .nav a.actief { background: var(--petrol); color: #fff; }
-  .app-header :focus-visible { outline: 3px solid rgba(247, 245, 240, 0.75); outline-offset: 2px; }
 
-  /* ---------- Hoofdinhoud ---------- */
-  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; }
-  .page-head { margin-bottom: 22px; }
-  h1 { font-size: 1.8rem; color: var(--navy); letter-spacing: -0.5px; margin: 0; line-height: 1.2; }
-  .gold-rule { width: 36px; height: 3px; background: var(--goud); border-radius: 2px; margin: 12px 0 10px; }
-  .page-sub { color: var(--tekst-zacht); font-size: 0.95rem; margin: 0; }
-  h2 { font-size: 1.1rem; margin: 0 0 16px; color: var(--navy); font-weight: 700; letter-spacing: -0.2px; }
+  /* ---------- Header met paginatitel en acties ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30; height: 76px; padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: var(--creme); border-bottom: 1px solid var(--lijn);
+  }
+  .topbar-titel { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .mobiel-logo { display: none; }
+  h1 { font-size: 1.4rem; font-weight: 700; color: var(--navy); letter-spacing: -0.4px; line-height: 1.2; }
+  .page-sub { font-size: 0.85rem; color: var(--tekst-zacht); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-acties { display: flex; align-items: center; gap: 10px; flex: none; }
+
+  .content-inner { max-width: 1240px; padding: 24px 32px 56px; }
+  .sectie { margin-bottom: 24px; }
+  [id="sectie-overzicht"], [id="sectie-opvolgen"], [id="sectie-nieuw"], [id="tabelKaart"] { scroll-margin-top: 96px; }
 
   .card {
-    background: var(--wit); border: 1px solid var(--lijn); border-radius: var(--radius);
-    box-shadow: var(--schaduw); padding: 24px; margin-bottom: 24px;
+    background: var(--wit); border: 1px solid var(--lijn); border-radius: var(--r-lg);
+    box-shadow: var(--sh-1); padding: 20px;
   }
+  .card-kop { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  h2 { font-size: 1.05rem; font-weight: 700; color: var(--navy); letter-spacing: -0.2px; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; margin-bottom: 24px; }
 
-  /* ---------- Meldingen ---------- */
-  .alert {
-    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px;
-    font-size: 0.95rem; border: 1px solid; border-left-width: 5px; background: var(--wit);
+  /* =====================================================================
+     KNOPPEN
+     ===================================================================== */
+  button { font: inherit; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent;
+    font-size: 0.92rem; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s, box-shadow 0.12s, transform 0.06s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .alert.rood { background: var(--rood-tint); border-color: #EBC3C3; border-left-color: var(--rood); }
-  .alert.rood strong { color: var(--rood-tekst); }
-  .alert.amber { background: var(--amber-tint); border-color: #EBD3A4; border-left-color: var(--amber); }
-  .alert.amber strong { color: var(--amber-tekst); }
-  .alert.groen { background: var(--groen-tint); border-color: #BFE0CE; border-left-color: var(--groen); }
-  .alert.groen strong { color: var(--groen-tekst); }
-  .alert strong { font-weight: 700; }
+  .btn .ico { width: 17px; height: 17px; }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-sm { height: 32px; padding: 0 12px; font-size: 0.82rem; border-radius: 8px; gap: 6px; }
+  .btn-sm .ico { width: 15px; height: 15px; }
+  .btn-icon { width: 40px; padding: 0; }
+  .btn-icon.btn-sm { width: 32px; }
 
-  /* ---------- Dashboardkaarten ---------- */
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .stat {
-    --accent: var(--navy);
-    background: var(--wit); border: 1px solid var(--lijn); border-top: 3px solid var(--accent);
-    border-radius: var(--radius); box-shadow: var(--schaduw); padding: 18px 20px;
+  .btn-primary { background: var(--petrol-knop); color: #fff; box-shadow: 0 1px 2px rgba(18, 128, 120, 0.35); }
+  .btn-primary:hover:not(:disabled) { background: var(--petrol-knop-hover); }
+  .btn-primary:active:not(:disabled) { background: var(--petrol-knop-actief); }
+
+  .btn-secondary { background: var(--wit); color: var(--navy); border-color: var(--lijn-sterk); }
+  .btn-secondary:hover:not(:disabled) { background: #FBF6EC; border-color: #CFC5B0; }
+  .btn-secondary:active:not(:disabled) { background: #F4EDE0; }
+
+  .btn-ghost { background: transparent; color: var(--navy); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(25, 54, 83, 0.07); }
+
+  .btn-akkoord { background: var(--groen-tint); color: var(--groen-tekst); border-color: var(--groen-rand); }
+  .btn-akkoord:hover:not(:disabled) { background: #D3EBDD; }
+  .btn-afgewezen { background: var(--afgewezen-tint); color: var(--afgewezen); border-color: var(--afgewezen-rand); }
+  .btn-afgewezen:hover:not(:disabled) { background: #F9D2D3; }
+
+  .btn-danger { background: var(--afgewezen); color: #fff; }
+  .btn-danger:hover:not(:disabled) { background: #9A1E29; }
+
+  .btn-sidebar { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.28); }
+  .btn-sidebar:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+  .btn-sidebar:focus-visible { outline-color: rgba(247, 245, 240, 0.75); }
+
+  /* Laadstatus */
+  .btn[aria-busy="true"] { pointer-events: none; }
+  .btn[aria-busy="true"]::before {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.45); border-top-color: #fff;
+    animation: draai 0.7s linear infinite;
   }
-  .stat.groen { --accent: var(--groen); }
-  .stat.amber { --accent: var(--amber); }
-  .stat.rood { --accent: var(--rood); }
-  .stat .label { font-size: 0.74rem; color: var(--tekst-zacht); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
-  .stat .value { font-size: 1.85rem; font-weight: 700; margin-top: 6px; color: var(--navy); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.2; }
-  .stat.groen .value { color: var(--groen-tekst); }
-  .stat.amber .value { color: var(--amber-tekst); }
-  .stat.rood .value { color: var(--rood-tekst); }
-  .stat .hint { font-size: 0.84rem; color: var(--tekst-zacht); margin-top: 2px; }
-  .stat .toon { font-size: 0.82rem; color: var(--petrol-donker); font-weight: 600; margin-top: 8px; }
-  .stat.clickable { cursor: pointer; transition: box-shadow 0.15s; }
-  .stat.clickable:hover { box-shadow: 0 2px 4px rgba(20, 43, 74, 0.08), 0 12px 28px rgba(20, 43, 74, 0.1); }
-  .stat.clickable:focus-visible { outline: 3px solid rgba(8, 126, 139, 0.45); outline-offset: 2px; }
+  @keyframes draai { to { transform: rotate(360deg); } }
 
-  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-
-  /* ---------- Formulier ---------- */
-  form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .field { display: flex; flex-direction: column; gap: 6px; }
+  /* =====================================================================
+     FORMULIEREN
+     ===================================================================== */
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .field.full { grid-column: 1 / -1; }
   label { font-size: 0.82rem; font-weight: 600; color: var(--tekst); }
   input, select {
-    font: inherit; color: var(--tekst); background: var(--wit); width: 100%;
-    padding: 10px 12px; border: 1px solid var(--lijn-sterk); border-radius: 10px;
+    font: inherit; font-size: 0.92rem; color: var(--tekst); background: var(--wit);
+    width: 100%; height: 40px; padding: 0 12px;
+    border: 1px solid var(--lijn-sterk); border-radius: 10px;
+    transition: border-color 0.12s, box-shadow 0.12s;
   }
   input::placeholder { color: #6F7A89; }
-  input:focus, select:focus {
-    outline: none; border-color: var(--petrol); box-shadow: 0 0 0 3px rgba(8, 126, 139, 0.2);
-  }
-  .error { color: var(--rood-tekst); font-size: 0.88rem; font-weight: 600; min-height: 1.2em; grid-column: 1 / -1; }
+  input:hover, select:hover { border-color: #C7BDA7; }
+  input:focus, select:focus { outline: none; border-color: var(--petrol); box-shadow: 0 0 0 3px rgba(22, 140, 131, 0.22); }
+  input[aria-invalid="true"] { border-color: var(--afgewezen); background: #FFFAFA; }
+  input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(180, 35, 47, 0.18); }
+  .veld-fout { font-size: 0.8rem; font-weight: 600; color: var(--afgewezen); line-height: 1.35; }
+  .zoekveld { position: relative; }
+  .zoekveld .ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--tekst-zacht); pointer-events: none; }
+  .zoekveld input { padding-left: 38px; }
 
-  /* ---------- Knoppen ---------- */
-  button { font: inherit; }
-  .btn {
-    cursor: pointer; border-radius: 10px; padding: 10px 18px; font-weight: 600;
-    border: 1px solid transparent; transition: background 0.15s, border-color 0.15s;
+  /* Opties in keuzelijsten krijgen dezelfde statuskleuren (niet alle browsers tonen dit) */
+  select option { background: #fff; color: var(--tekst); }
+  select option[value="Concept"] { color: var(--tekst-zacht); }
+  select option[value="Verstuurd"] { color: var(--blauw); }
+  select option[value="Opvolgen"] { color: var(--amber-tekst); }
+  select option[value="Akkoord"] { color: var(--groen-tekst); }
+  select option[value="Afgewezen"] { color: var(--afgewezen); }
+  select option[value="TeLaat"] { color: var(--rood-tekst); }
+  select option[value="Vandaag"] { color: var(--amber-tekst); }
+
+  /* =====================================================================
+     STATUSSEN EN WAARSCHUWINGEN
+     ===================================================================== */
+  .pill {
+    display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 999px;
+    font-weight: 700; font-size: 0.8rem; line-height: 1.3; border: 1px solid transparent;
   }
-  .btn:focus-visible { outline: 3px solid rgba(8, 126, 139, 0.45); outline-offset: 2px; }
-  .btn-primary { background: var(--petrol); color: #fff; }
-  .btn-primary:hover { background: var(--petrol-donker); }
-  .btn-ghost { background: var(--wit); color: var(--navy); border-color: var(--lijn-sterk); }
-  .btn-ghost:hover { background: #F2EFE7; }
-  .btn-cta { background: var(--bg); color: var(--navy); white-space: nowrap; }
-  .btn-cta:hover { background: #fff; }
-  .btn-small { padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; }
-  .btn-win { background: var(--groen-tint); color: var(--groen-tekst); border-color: #BFE0CE; }
-  .btn-win:hover { background: #D3EBDD; }
-  .btn-lose { background: var(--neutraal-tint); color: var(--neutraal-tekst); border-color: #D9D3C4; }
-  .btn-lose:hover { background: #E4DFD2; }
-  .btn-del { background: transparent; color: var(--rood-tekst); }
-  .btn-del:hover { background: var(--rood-tint); }
-  .btn-danger { background: var(--rood); color: #fff; }
-  .btn-danger:hover { background: #9C2D2D; }
+  .status-select {
+    font-weight: 700; font-size: 0.82rem; width: auto; height: 32px; border-radius: 999px;
+    padding: 0 30px 0 12px; border: 1px solid transparent; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235E6B7A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 11px center;
+  }
+  /* Eén kleur per status, overal gelijk: tabel, labels, filters en overzichten */
+  .st-Concept { background-color: var(--wit); color: var(--tekst-zacht); border: 1px dashed #B9B2A0; }
+  .st-Verstuurd { background-color: var(--blauw-tint); color: var(--blauw); border: 1px solid var(--blauw-rand); }
+  .st-Opvolgen { background-color: var(--amber-tint); color: var(--amber-tekst); border: 1px solid var(--amber-rand); }
+  .st-Akkoord { background-color: var(--groen-tint); color: var(--groen-tekst); border: 1px solid var(--groen-rand); }
+  .st-Afgewezen { background-color: var(--afgewezen-tint); color: var(--afgewezen); border: 1px solid var(--afgewezen-rand); }
+
+  /* Filterlijst krijgt de kleur van de gekozen status of waarschuwing */
+  .filter-gekleurd { font-weight: 700; }
+  .filter-telaat { background-color: var(--rood); color: #fff; border: 1px solid var(--rood); }
+  .filter-vandaag { background-color: var(--amber-tint); color: var(--amber-tekst); border: 1.5px solid var(--amber); }
+
+  /* Waarschuwingen (geen statussen): vierkante badges met pictogram */
+  .w-badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 6px;
+    font-size: 0.74rem; font-weight: 700; line-height: 1.3; white-space: nowrap;
+  }
+  .w-badge .ico { width: 13px; height: 13px; stroke-width: 2.2; }
+  .w-telaat { background: var(--rood); color: #fff; }
+  .w-vandaag { background: var(--amber-tint); color: var(--amber-tekst); border: 1.5px solid var(--amber); padding: 1.5px 8px 1.5px 6px; }
+  .w-wrap { margin-top: 5px; }
+
+  /* =====================================================================
+     MELDINGEN
+     ===================================================================== */
+  .alert {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    border: 1px solid; border-left-width: 4px; border-radius: var(--r-md);
+    padding: 12px 16px; margin-bottom: 20px; font-size: 0.92rem;
+  }
+  .alert .ico { width: 20px; height: 20px; }
+  .alert-tekst { flex: 1; min-width: 200px; }
+  .alert.rood { background: var(--rood-tint); border-color: var(--rood-rand); border-left-color: var(--rood); }
+  .alert.rood .ico, .alert.rood strong { color: var(--rood-tekst); }
+  .alert.amber { background: var(--amber-tint); border-color: var(--amber-rand); border-left-color: var(--amber); }
+  .alert.amber .ico, .alert.amber strong { color: var(--amber-tekst); }
+  .alert.groen { background: var(--groen-tint); border-color: var(--groen-rand); border-left-color: var(--groen); }
+  .alert.groen .ico, .alert.groen strong { color: var(--groen-tekst); }
+
+  .toasts {
+    position: fixed; right: 20px; bottom: 20px; z-index: 100;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end; pointer-events: none;
+  }
+  .toast {
+    pointer-events: auto; display: flex; align-items: flex-start; gap: 10px;
+    max-width: 380px; padding: 12px 8px 12px 14px; border-radius: var(--r-md);
+    background: var(--navy); color: #fff; box-shadow: var(--sh-3); font-size: 0.9rem;
+    animation: toastIn 0.18s ease-out;
+  }
+  .toast .toast-ico { margin-top: 1px; color: #7FD6CE; }
+  .toast-tekst { flex: 1; padding-top: 1px; }
+  .toast .btn-ghost { color: #fff; }
+  .toast .btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+  .toast-fout { background: var(--afgewezen-tint); color: var(--rood-tekst); border: 1px solid var(--afgewezen-rand); border-left: 4px solid var(--afgewezen); }
+  .toast-fout .toast-ico { color: var(--afgewezen); }
+  .toast-fout .btn-ghost { color: var(--rood-tekst); }
+  .toast-fout .btn-ghost:hover:not(:disabled) { background: rgba(180, 35, 47, 0.1); }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* =====================================================================
+     DASHBOARD
+     ===================================================================== */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat {
+    background: var(--wit); border: 1px solid var(--lijn); border-radius: var(--r-lg);
+    box-shadow: var(--sh-1); padding: 16px 18px;
+  }
+  .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .stat-label { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tekst-zacht); }
+  .stat-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .stat-ico .ico { width: 18px; height: 18px; }
+  .tint-navy { background: #E8EDF3; color: var(--navy); }
+  .tint-petrol { background: var(--petrol-tint); color: var(--petrol-tekst); }
+  .tint-groen { background: var(--groen-tint); color: var(--groen-tekst); }
+  .tint-amber { background: var(--amber-tint); color: var(--amber-tekst); }
+  .tint-rood { background: var(--rood-tint); color: var(--rood-tekst); }
+  .stat-value { margin-top: 6px; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .stat-value.tekst-rood { color: var(--rood-tekst); }
+  .stat-value.tekst-amber { color: var(--amber-tekst); }
+  .stat-value.tekst-groen { color: var(--groen-tekst); }
+  .stat-hint { margin-top: 2px; font-size: 0.82rem; color: var(--tekst-zacht); }
+  .stat-link { margin-top: 8px; font-size: 0.82rem; font-weight: 600; color: var(--petrol-tekst); }
+  .stat.clickable { cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+  .stat.clickable:hover { box-shadow: var(--sh-2); border-color: var(--lijn-sterk); }
+  .stat.clickable:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .sectie-kop { margin-bottom: 12px; }
+  .sectie-kop p { font-size: 0.88rem; color: var(--tekst-zacht); margin-top: 2px; }
+  .wf-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--tekst-zacht); margin: 10px 0 14px; }
+  .wf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .wf-tile {
+    --tile: var(--lijn-sterk);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+    background: var(--wit); border: 1px solid var(--lijn); border-top: 3px solid var(--tile);
+    border-radius: var(--r-md); box-shadow: var(--sh-1);
+    padding: 12px 14px; text-align: left; font: inherit; color: var(--tekst); cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .wf-Verstuurd { --tile: var(--blauw); }
+  .wf-Opvolgen { --tile: var(--amber); }
+  .wf-Akkoord { --tile: var(--groen); }
+  .wf-Afgewezen { --tile: var(--afgewezen); }
+  .wf-tile:hover { border-color: var(--lijn-sterk); border-top-color: var(--tile); box-shadow: var(--sh-2); }
+  .wf-tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .wf-tile[aria-pressed="true"] { border-color: var(--petrol); border-top-color: var(--tile); box-shadow: 0 0 0 3px rgba(22, 140, 131, 0.22); }
+  .wf-count { font-size: 1.5rem; font-weight: 700; color: var(--navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .wf-val { font-size: 0.8rem; color: var(--tekst-zacht); font-variant-numeric: tabular-nums; }
 
   /* ---------- Opvolglijst ---------- */
-  .followups { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; padding-right: 2px; }
+  .followups { display: flex; flex-direction: column; gap: 10px; max-height: 470px; overflow-y: auto; padding-right: 2px; }
   .fu-item {
-    border: 1px solid var(--lijn); border-left: 4px solid var(--amber);
-    border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--wit);
+    display: flex; flex-direction: column; gap: 10px; padding: 14px;
+    background: var(--wit); border: 1px solid var(--lijn); border-left: 4px solid var(--amber); border-radius: var(--r-md);
   }
   .fu-item.late { border-left-color: var(--rood); }
   .fu-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .fu-name { font-weight: 700; color: var(--navy); }
-  .fu-sub { font-size: 0.84rem; color: var(--tekst-zacht); }
-  .fu-amount { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--navy); }
+  .fu-sub { font-size: 0.82rem; color: var(--tekst-zacht); }
+  .fu-amount { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; text-align: right; }
+  .fu-next { font-size: 0.84rem; color: var(--tekst-zacht); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fu-next b { color: var(--tekst); font-weight: 600; }
   .fu-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .tag-late { color: var(--rood-tekst); font-weight: 700; font-size: 0.86rem; }
-  .tag-today { color: var(--amber-tekst); font-weight: 700; font-size: 0.86rem; }
-  .empty { color: var(--tekst-zacht); text-align: center; padding: 26px 10px; }
 
-  /* ---------- Offertelijst ---------- */
-  .toolbar { display: grid; grid-template-columns: 2fr 1.3fr 1.3fr auto; gap: 14px; margin-bottom: 18px; align-items: end; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; min-width: 980px; }
-  th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--lijn); font-size: 0.92rem; vertical-align: middle; }
+  /* ---------- Lege toestanden ---------- */
+  .leeg { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 28px 16px; }
+  .leeg-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--petrol-tint); color: var(--petrol-tekst); margin-bottom: 6px; }
+  .leeg-ico .ico { width: 24px; height: 24px; }
+  .leeg h3 { font-size: 1rem; font-weight: 700; color: var(--navy); }
+  .leeg p { font-size: 0.9rem; color: var(--tekst-zacht); max-width: 380px; }
+  .leeg .btn { margin-top: 10px; }
+
+  /* =====================================================================
+     OFFERTELIJST
+     ===================================================================== */
+  .toolbar { display: grid; grid-template-columns: 2fr 1.4fr 1.3fr auto; gap: 12px; margin-bottom: 14px; align-items: end; }
+  .tabel-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 860px; }
   th {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tekst-zacht);
-    background: #FBFAF7; border-bottom: 1px solid var(--lijn-sterk); font-weight: 700;
+    text-align: left; padding: 10px 12px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--tekst-zacht); border-bottom: 1px solid var(--lijn-sterk);
   }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--lijn); vertical-align: middle; font-size: 0.92rem; }
+  tbody tr:last-child td { border-bottom: none; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tbody tr:hover { background: #FAF8F3; }
-  tbody tr.row-late { background: #FFF8F8; box-shadow: inset 4px 0 0 var(--rood); }
-  tbody tr.row-today { background: #FFFAF0; box-shadow: inset 4px 0 0 var(--amber); }
-  tbody tr.row-late:hover { background: #FDEFEF; }
-  tbody tr.row-today:hover { background: #FDF3E1; }
+  th.acties-kop { text-align: right; }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover { background: #FFFBF4; }
+  tbody tr.row-late { background: #FFF7F5; box-shadow: inset 3px 0 0 var(--rood); }
+  tbody tr.row-today { background: #FFFAEF; box-shadow: inset 3px 0 0 var(--amber); }
+  tbody tr.row-late:hover { background: #FDEFEC; }
+  tbody tr.row-today:hover { background: #FDF3DE; }
   .cust-name { font-weight: 700; color: var(--navy); }
-  .cust-sub { font-size: 0.82rem; color: var(--tekst-zacht); }
-  .due-badge {
-    display: inline-block; margin-top: 4px; padding: 2px 9px; border-radius: 999px;
-    font-size: 0.72rem; font-weight: 700; border: 1px solid;
+  .cust-sub { font-size: 0.82rem; color: var(--tekst-zacht); overflow-wrap: anywhere; }
+  .volgende { font-size: 0.78rem; color: var(--tekst-zacht); margin-top: 6px; max-width: 200px; }
+  .acties { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+  .count { margin-top: 12px; font-size: 0.84rem; color: var(--tekst-zacht); }
+
+  /* ---------- Actiemenu per offerte ---------- */
+  .menu {
+    position: fixed; z-index: 60; min-width: 220px; padding: 6px;
+    background: var(--wit); border: 1px solid var(--lijn-sterk); border-radius: var(--r-md); box-shadow: var(--sh-3);
+    animation: menuIn 0.1s ease-out;
   }
-  .due-late { background: var(--rood-tint); color: var(--rood-tekst); border-color: #EBC3C3; }
-  .due-today { background: var(--amber-tint); color: var(--amber-tekst); border-color: #EBD3A4; }
-
-  .status-select {
-    font-weight: 700; font-size: 0.85rem; width: auto; border-radius: 999px;
-    padding: 6px 30px 6px 12px; border: 1px solid transparent; cursor: pointer;
-    -webkit-appearance: none; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235A6675' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 11px center;
+  .menu-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; height: 38px; padding: 0 10px;
+    border: none; border-radius: var(--r-sm); background: transparent; color: var(--tekst);
+    font-size: 0.9rem; font-weight: 600; text-align: left; cursor: pointer;
   }
-  .st-Nieuw { background-color: var(--navy-tint); color: var(--navy); border-color: #CBD6E4; }
-  .st-Opvolgen { background-color: var(--amber-tint); color: var(--amber-tekst); border-color: #EBD3A4; }
-  .st-Gewonnen { background-color: var(--groen-tint); color: var(--groen-tekst); border-color: #BFE0CE; }
-  .st-Verloren { background-color: var(--neutraal-tint); color: var(--neutraal-tekst); border-color: #D9D3C4; }
+  .menu-item:hover { background: var(--creme); }
+  .menu-item:focus-visible { outline: 2px solid var(--petrol); outline-offset: -2px; background: var(--creme); }
+  .menu-item .ico { width: 17px; height: 17px; }
+  .menu-akkoord { color: var(--groen-tekst); }
+  .menu-afgewezen { color: var(--afgewezen); }
+  .menu-gevaar { color: var(--rood-tekst); }
+  .menu-gevaar:hover { background: var(--rood-tint); }
+  .menu-sep { height: 1px; background: var(--lijn); margin: 6px 4px; }
+  @keyframes menuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
-  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .count { font-size: 0.86rem; color: var(--tekst-zacht); margin-top: 14px; }
-
-  footer { text-align: center; color: var(--tekst-zacht); font-size: 0.84rem; padding: 8px 24px 40px; }
-  footer .btn { margin-bottom: 14px; }
+  .page-foot { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0 0; color: var(--tekst-zacht); font-size: 0.82rem; text-align: center; }
 
   /* ---------- Bevestigingsvenster ---------- */
   dialog {
-    border: none; border-radius: var(--radius); padding: 28px; max-width: 460px; width: calc(100% - 32px);
-    box-shadow: 0 16px 48px rgba(20, 43, 74, 0.32); color: var(--tekst); background: var(--wit);
+    border: none; border-radius: var(--r-lg); padding: 0; max-width: 460px; width: calc(100% - 32px);
+    box-shadow: var(--sh-3); color: var(--tekst); background: var(--wit);
   }
-  dialog::backdrop { background: rgba(20, 43, 74, 0.6); }
-  dialog h3 { margin: 0 0 10px; font-size: 1.15rem; color: var(--navy); }
-  dialog p { margin: 0 0 8px; }
-  dialog .dlg-detail { background: var(--bg); border: 1px solid var(--lijn); border-radius: 10px; padding: 12px 14px; font-size: 0.92rem; margin: 14px 0; }
-  dialog .dlg-warn { color: var(--rood-tekst); font-size: 0.9rem; font-weight: 600; }
-  dialog .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  dialog[open] { animation: dlgIn 0.16s ease-out; }
+  dialog::backdrop { background: rgba(25, 54, 83, 0.55); }
+  .dlg-inner { padding: 24px; }
+  .dlg-kop { display: flex; gap: 14px; align-items: flex-start; }
+  .dlg-icoon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--afgewezen-tint); color: var(--afgewezen); }
+  dialog h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); letter-spacing: -0.2px; }
+  .dlg-tekst { margin-top: 4px; font-size: 0.9rem; color: var(--tekst-zacht); }
+  .dlg-detail { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--creme); border: 1px solid var(--lijn); font-size: 0.9rem; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  @keyframes dlgIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 
-  /* ---------- Tablet en mobiel ---------- */
-  @media (max-width: 900px) {
+  /* ---------- Mobiele navigatie onderaan ---------- */
+  .bottom-nav { display: none; }
+
+  /* =====================================================================
+     RESPONSIEF
+     ===================================================================== */
+  @media (max-width: 1000px) {
+    .app { grid-template-columns: minmax(0, 1fr); }
+    .sidebar { display: none; }
+    .topbar { height: 64px; padding: 0 16px; }
+    .mobiel-logo { display: grid; }
+    .content-inner { padding: 18px 16px calc(92px + env(safe-area-inset-bottom)); }
+    [id="sectie-overzicht"], [id="sectie-opvolgen"], [id="sectie-nieuw"], [id="tabelKaart"] { scroll-margin-top: 80px; }
     .layout { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 860px) {
     .toolbar { grid-template-columns: 1fr 1fr; }
-  }
-  @media (max-width: 760px) {
-    [id="sectie-overzicht"], [id="sectie-opvolgen"], [id="sectie-nieuw"], [id="tabelKaart"] { scroll-margin-top: 120px; }
-    .header-inner { flex-wrap: wrap; gap: 8px 12px; padding: 10px 16px; min-height: 0; }
-    .brand { order: 1; }
-    #nieuweBtn { order: 2; margin-left: auto; }
-    .nav { order: 3; flex: 1 0 100%; overflow-x: auto; gap: 2px; }
-    .nav a { padding: 7px 12px; font-size: 0.86rem; }
-    main { padding: 22px 16px 36px; }
-    h1 { font-size: 1.5rem; }
-    .card { padding: 18px; }
 
-    /* Tabel wordt een lijst met kaarten */
-    .table-wrap { overflow-x: visible; }
+    .bottom-nav {
+      display: flex; justify-content: space-around; gap: 4px;
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      background: var(--wit); border-top: 1px solid var(--lijn); box-shadow: 0 -4px 16px rgba(25, 54, 83, 0.06);
+    }
+    .bottom-nav a {
+      position: relative; flex: 1; min-height: 48px; padding: 6px 4px; border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      font-size: 0.72rem; font-weight: 700; text-decoration: none; color: var(--tekst-zacht);
+    }
+    .bottom-nav a.actief { background: var(--petrol-tint); color: var(--petrol-tekst); }
+    .bottom-nav a:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; }
+    .bottom-nav .nav-count { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; min-width: 18px; font-size: 0.66rem; padding: 0 5px; }
+    .toasts { left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); align-items: stretch; }
+    .toast { max-width: none; }
+  }
+
+  /* Tabel wordt een lijst met kaarten */
+  @media (max-width: 900px) {
+    .tabel-wrap { overflow-x: visible; }
     table, thead, tbody, tr, td { display: block; }
     table { min-width: 0; }
     thead { display: none; }
-    tbody tr { border: 1px solid var(--lijn); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; background: var(--wit); }
-    tbody tr.row-late { border-color: #EBC3C3; }
-    tbody tr.row-today { border-color: #EBD3A4; }
+    tbody tr { border: 1px solid var(--lijn); border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 12px; background: var(--wit); }
+    tbody tr.row-late { border-color: var(--rood-rand); }
+    tbody tr.row-today { border-color: var(--amber-rand); }
     td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; border-bottom: none; text-align: right; }
     td::before {
-      content: attr(data-label); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
-      color: var(--tekst-zacht); font-weight: 700; text-align: left; flex: none;
+      content: attr(data-label); flex: none; text-align: left;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tekst-zacht);
     }
     td[data-label=""] { display: block; text-align: left; padding-top: 0; }
     td[data-label=""]::before { display: none; }
     td.acties-cel { display: block; padding-bottom: 0; }
     td.acties-cel::before { display: none; }
-    .datum-cel { text-align: right; }
-    .row-actions { justify-content: flex-start; }
+    .datum-cel, .status-cel { text-align: right; }
+    .volgende { max-width: none; }
+    .acties { justify-content: flex-start; }
   }
-  @media (max-width: 560px) {
+
+  @media (max-width: 600px) {
+    .page-sub { font-size: 0.78rem; }
+    h1 { font-size: 1.25rem; }
+    .topbar-acties .btn-tekst { display: none; }
+    .topbar-acties .btn { width: 40px; padding: 0; }
     form { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
     .stat { padding: 14px; }
-    .stat .value { font-size: 1.4rem; }
+    .stat-value { font-size: 1.4rem; }
+    .stat-ico { width: 30px; height: 30px; }
     .toolbar { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .wf-tile { padding: 10px 12px; }
   }
 </style>
 </head>
 <body>
 
-<header class="app-header">
-  <div class="header-inner">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+<!-- Iconen (lijniconen, één set voor de hele app) -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 9.5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8"/><path d="M3 13v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/><path d="M3 13h5l1 3h6l1-3h5"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+  </defs>
+</svg>
+
+<noscript>Deze app heeft JavaScript nodig. Zet JavaScript aan in je browser om OffertePilot te gebruiken.</noscript>
+
+<div class="app">
+
+  <!-- Zijbalk (desktop en tablet breed) -->
+  <aside class="sidebar" aria-label="Zijbalk">
+    <div class="sb-brand">
+      <span class="logo-mark" aria-hidden="true"><svg class="ico"><use href="#i-send"/></svg></span>
       <span class="brand-name">Offerte<b>Pilot</b></span>
-      <span class="badge-demo">DEMO</span>
     </div>
-    <nav class="nav" id="nav" aria-label="Hoofdnavigatie">
-      <a href="#sectie-overzicht">Overzicht</a>
-      <a href="#sectie-opvolgen">Opvolgen</a>
-      <a href="#tabelKaart">Offertes</a>
+
+    <div class="sb-label">Menu</div>
+    <nav class="sb-nav" data-nav aria-label="Hoofdnavigatie">
+      <a href="#sectie-overzicht"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span>Overzicht</span></a>
+      <a href="#sectie-opvolgen"><svg class="ico" aria-hidden="true"><use href="#i-bell"/></svg><span>Opvolgen</span><span class="nav-count js-opv-count" hidden></span></a>
+      <a href="#tabelKaart"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg><span>Offertes</span><span class="nav-count js-offerte-count"></span></a>
     </nav>
-    <button type="button" class="btn btn-cta btn-small" id="nieuweBtn">+ Nieuwe offerte</button>
+
+    <div class="sb-foot">
+      <div class="demo-kaart">
+        <span class="badge-demo">DEMO</span>
+        <span>Fictieve gegevens. Alles blijft alleen in deze browser.</span>
+        <button type="button" class="btn btn-sidebar btn-sm js-reset"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Testgegevens herstellen</span></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <!-- Header met paginatitel en acties -->
+    <header class="topbar">
+      <div class="topbar-titel">
+        <span class="logo-mark mobiel-logo" aria-hidden="true"><svg class="ico"><use href="#i-send"/></svg></span>
+        <div style="min-width:0">
+          <h1 id="paginaTitel">Overzicht</h1>
+          <p class="page-sub" id="datumRegel"></p>
+        </div>
+      </div>
+      <div class="topbar-acties">
+        <button type="button" class="btn btn-primary" id="nieuweBtn" title="Nieuwe offerte toevoegen" aria-label="Nieuwe offerte toevoegen">
+          <svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg><span class="btn-tekst">Nieuwe offerte</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content-inner">
+
+      <section id="sectie-overzicht" class="sectie">
+        <div id="alertBar" role="status" aria-live="polite"></div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="sectie-kop">
+          <h2>Offertes per status</h2>
+          <p>Concept → Verstuurd → Opvolgen → Akkoord of Afgewezen. Klik op een status om de lijst te filteren.</p>
+        </div>
+        <div class="wf-legend">
+          <span class="w-badge w-telaat"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>Te laat</span>
+          <span class="w-badge w-vandaag"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>Vandaag opvolgen</span>
+          <span>zijn waarschuwingen op basis van de opvolgdatum, geen statussen.</span>
+        </div>
+        <div class="wf-grid" id="workflow"></div>
+      </section>
+
+      <div class="layout">
+        <section class="card" id="sectie-opvolgen">
+          <div class="card-kop"><h2>Opvolgen vandaag of te laat</h2></div>
+          <div class="followups" id="followups"></div>
+        </section>
+
+        <section class="card" id="sectie-nieuw">
+          <div class="card-kop"><h2>Nieuwe offerte toevoegen</h2></div>
+          <form id="quoteForm" novalidate>
+            <div class="field">
+              <label for="klantnaam">Klantnaam *</label>
+              <input id="klantnaam" type="text" autocomplete="off" placeholder="bijv. Jan de Vries" aria-describedby="fout-klantnaam">
+              <div class="veld-fout" id="fout-klantnaam" hidden></div>
+            </div>
+            <div class="field">
+              <label for="bedrijfsnaam">Bedrijfsnaam *</label>
+              <input id="bedrijfsnaam" type="text" autocomplete="off" placeholder="bijv. De Vries Bouw B.V." aria-describedby="fout-bedrijfsnaam">
+              <div class="veld-fout" id="fout-bedrijfsnaam" hidden></div>
+            </div>
+            <div class="field full">
+              <label for="email">E-mailadres *</label>
+              <input id="email" type="email" autocomplete="off" placeholder="naam@bedrijf.nl" aria-describedby="fout-email">
+              <div class="veld-fout" id="fout-email" hidden></div>
+            </div>
+            <div class="field">
+              <label for="bedrag">Offertebedrag (€) *</label>
+              <input id="bedrag" type="number" min="0" step="0.01" inputmode="decimal" placeholder="bijv. 4850" aria-describedby="fout-bedrag">
+              <div class="veld-fout" id="fout-bedrag" hidden></div>
+            </div>
+            <div class="field">
+              <label for="nieuweStatus">Status *</label>
+              <select id="nieuweStatus">
+                <option value="Concept">Concept (nog niet verstuurd)</option>
+                <option value="Verstuurd" selected>Verstuurd</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="offertedatum">Offertedatum *</label>
+              <input id="offertedatum" type="date" aria-describedby="fout-offertedatum">
+              <div class="veld-fout" id="fout-offertedatum" hidden></div>
+            </div>
+            <div class="field">
+              <label for="opvolgdatum">Opvolgdatum *</label>
+              <input id="opvolgdatum" type="date" aria-describedby="fout-opvolgdatum">
+              <div class="veld-fout" id="fout-opvolgdatum" hidden></div>
+            </div>
+            <div class="field full">
+              <button type="submit" class="btn btn-primary" id="submitBtn"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg><span class="btn-label">Offerte toevoegen</span></button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <section class="card" id="tabelKaart">
+        <div class="card-kop"><h2>Alle offertes</h2></div>
+        <div class="toolbar">
+          <div class="field">
+            <label for="zoek">Zoeken</label>
+            <div class="zoekveld">
+              <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+              <input id="zoek" type="search" placeholder="Zoek op naam, bedrijf of e-mail…">
+            </div>
+          </div>
+          <div class="field">
+            <label for="filterStatus">Filter</label>
+            <select id="filterStatus">
+              <option value="Alle">Alle statussen</option>
+              <option value="ActieNodig">Opvolging nodig (vandaag of te laat)</option>
+              <option value="TeLaat">Waarschuwing: Te laat</option>
+              <option value="Vandaag">Waarschuwing: Vandaag opvolgen</option>
+              <option value="Concept">Concept</option>
+              <option value="Verstuurd">Verstuurd</option>
+              <option value="Opvolgen">Opvolgen</option>
+              <option value="Akkoord">Akkoord</option>
+              <option value="Afgewezen">Afgewezen</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sorteer">Sorteren op</label>
+            <select id="sorteer">
+              <option value="urgent">Meest urgent eerst</option>
+              <option value="opvolg">Opvolgdatum (eerst)</option>
+              <option value="bedrag">Bedrag (hoogste eerst)</option>
+              <option value="nieuwste">Offertedatum (nieuwste)</option>
+            </select>
+          </div>
+          <div class="field">
+            <button type="button" class="btn btn-secondary" id="wisFilters" title="Zoekopdracht en filters wissen"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg><span>Filters wissen</span></button>
+          </div>
+        </div>
+
+        <div class="tabel-wrap" id="tabelWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Klant</th>
+                <th class="num">Bedrag</th>
+                <th>Offertedatum</th>
+                <th>Opvolgdatum</th>
+                <th>Status</th>
+                <th class="acties-kop">Acties</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="tableEmpty" hidden></div>
+        <div class="count" id="count"></div>
+      </section>
+
+      <footer class="page-foot">
+        <button type="button" class="btn btn-secondary btn-sm js-reset"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Testgegevens herstellen</span></button>
+        <div>OffertePilot demo · gegevens worden alleen in deze browser bewaard (localStorage)</div>
+      </footer>
+    </main>
   </div>
-</header>
+</div>
 
-<main>
-  <section id="sectie-overzicht">
-    <div class="page-head">
-      <h1>Overzicht</h1>
-      <div class="gold-rule" aria-hidden="true"></div>
-      <p class="page-sub" id="datumRegel"></p>
-    </div>
+<!-- Mobiele navigatie -->
+<nav class="bottom-nav" data-nav aria-label="Hoofdnavigatie mobiel">
+  <a href="#sectie-overzicht"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span>Overzicht</span></a>
+  <a href="#sectie-opvolgen"><svg class="ico" aria-hidden="true"><use href="#i-bell"/></svg><span>Opvolgen</span><span class="nav-count js-opv-count" hidden></span></a>
+  <a href="#tabelKaart"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg><span>Offertes</span></a>
+</nav>
 
-    <div id="alertBar" role="status" aria-live="polite"></div>
+<!-- Actiemenu per offerte -->
+<div class="menu" id="actieMenu" role="menu" aria-label="Meer acties" hidden></div>
 
-    <div class="stats" id="stats"></div>
-  </section>
+<!-- Meldingen -->
+<div class="toasts" id="toasts"></div>
 
-  <div class="layout">
-    <section class="card" id="sectie-opvolgen">
-      <h2>Opvolgen vandaag of te laat</h2>
-      <div class="followups" id="followups"></div>
-    </section>
-
-    <section class="card" id="sectie-nieuw">
-      <h2>Nieuwe offerte toevoegen</h2>
-      <form id="quoteForm" novalidate>
-        <div class="field">
-          <label for="klantnaam">Klantnaam *</label>
-          <input id="klantnaam" type="text" placeholder="bijv. Jan de Vries">
-        </div>
-        <div class="field">
-          <label for="bedrijfsnaam">Bedrijfsnaam *</label>
-          <input id="bedrijfsnaam" type="text" placeholder="bijv. De Vries Bouw B.V.">
-        </div>
-        <div class="field full">
-          <label for="email">E-mailadres *</label>
-          <input id="email" type="email" placeholder="naam@bedrijf.nl">
-        </div>
-        <div class="field">
-          <label for="bedrag">Offertebedrag (€) *</label>
-          <input id="bedrag" type="number" min="0" step="0.01" placeholder="bijv. 4850">
-        </div>
-        <div class="field">
-          <label for="offertedatum">Offertedatum *</label>
-          <input id="offertedatum" type="date">
-        </div>
-        <div class="field full">
-          <label for="opvolgdatum">Opvolgdatum *</label>
-          <input id="opvolgdatum" type="date">
-        </div>
-        <div class="error" id="formError"></div>
-        <div class="field full">
-          <button type="submit" class="btn btn-primary">Offerte toevoegen</button>
-        </div>
-      </form>
-    </section>
-  </div>
-
-  <section class="card" id="tabelKaart">
-    <h2>Alle offertes</h2>
-    <div class="toolbar">
-      <div class="field">
-        <label for="zoek">Zoeken</label>
-        <input id="zoek" type="search" placeholder="Zoek op naam, bedrijf of e-mail…">
-      </div>
-      <div class="field">
-        <label for="filterStatus">Filter</label>
-        <select id="filterStatus">
-          <option value="Alle">Alle statussen</option>
-          <option value="ActieNodig">Opvolging nodig (vandaag of te laat)</option>
-          <option value="Nieuw">Nieuw</option>
-          <option value="Opvolgen">Opvolgen</option>
-          <option value="Gewonnen">Gewonnen</option>
-          <option value="Verloren">Verloren</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="sorteer">Sorteren op</label>
-        <select id="sorteer">
-          <option value="urgent">Meest urgent eerst</option>
-          <option value="opvolg">Opvolgdatum (eerst)</option>
-          <option value="bedrag">Bedrag (hoogste eerst)</option>
-          <option value="nieuwste">Offertedatum (nieuwste)</option>
-        </select>
-      </div>
-      <div class="field">
-        <button type="button" class="btn btn-ghost" id="wisFilters">Filters wissen</button>
+<!-- Bevestigingsvenster -->
+<dialog id="deleteDialog" aria-labelledby="dlgTitel" aria-describedby="dlgTekst">
+  <div class="dlg-inner">
+    <div class="dlg-kop">
+      <span class="dlg-icoon" id="dlgIcoon"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></span>
+      <div>
+        <h3 id="dlgTitel">Offerte definitief verwijderen?</h3>
+        <p class="dlg-tekst" id="dlgTekst">Dit kan niet ongedaan worden gemaakt.</p>
       </div>
     </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Klant</th>
-            <th>E-mail</th>
-            <th class="num">Bedrag</th>
-            <th>Offertedatum</th>
-            <th>Opvolgdatum</th>
-            <th>Status</th>
-            <th>Acties</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+    <div class="dlg-detail" id="dlgDetail"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-secondary" id="dlgCancel" autofocus>Annuleren</button>
+      <button type="button" class="btn btn-danger" id="dlgConfirm"><span>Definitief verwijderen</span></button>
     </div>
-    <div class="empty" id="tableEmpty" style="display:none;">Geen offertes gevonden.</div>
-    <div class="count" id="count"></div>
-  </section>
-</main>
-
-<footer>
-  <button class="btn btn-ghost btn-small" id="resetBtn" type="button">Testgegevens herstellen</button>
-  <div>OffertePilot demo · gegevens worden alleen in deze browser bewaard (localStorage)</div>
-</footer>
-
-<!-- Bevestigingsvenster verwijderen -->
-<dialog id="deleteDialog" aria-labelledby="dlgTitel">
-  <h3 id="dlgTitel">Offerte definitief verwijderen?</h3>
-  <p>Je staat op het punt deze offerte te verwijderen:</p>
-  <div class="dlg-detail" id="dlgDetail"></div>
-  <p class="dlg-warn">Dit kan niet ongedaan worden gemaakt.</p>
-  <div class="dlg-actions">
-    <button type="button" class="btn btn-ghost" id="dlgCancel" autofocus>Annuleren</button>
-    <button type="button" class="btn btn-danger" id="dlgConfirm">Definitief verwijderen</button>
   </div>
 </dialog>
 
@@ -430,11 +780,28 @@
 (function () {
   "use strict";
 
-  // Let op: deze sleutel is bewust ongewijzigd, zodat bestaande gegevens behouden blijven.
+  // Deze sleutel is bewust ongewijzigd, zodat bestaande gegevens behouden blijven.
   var STORAGE_KEY = "offertepilot.demo.v1";
-  var STATUSSEN = ["Nieuw", "Opvolgen", "Gewonnen", "Verloren"];
+  // Reservekopie van de gegevens zoals ze waren vóór de overstap naar de nieuwe statussen.
+  var BACKUP_KEY = "offertepilot.demo.v1.backup-oude-statussen";
+
+  var STATUSSEN = ["Concept", "Verstuurd", "Opvolgen", "Akkoord", "Afgewezen"];
+  // Oude statussen worden omgezet naar de nieuwe. Onbekende statussen blijven zichtbaar als "Verstuurd".
+  var STATUS_MIGRATIE = {
+    "concept": "Concept",
+    "verstuurd": "Verstuurd",
+    "opvolgen": "Opvolgen",
+    "akkoord": "Akkoord",
+    "afgewezen": "Afgewezen",
+    "nieuw": "Verstuurd",
+    "gewonnen": "Akkoord",
+    "verloren": "Afgewezen"
+  };
+
   var offertes = [];
-  var teVerwijderenId = null;
+  var bevestigActie = null;
+  var menuKnopId = null;
+  var opslagFoutGemeld = false;
 
   /* ---------- Hulpfuncties voor datums ---------- */
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
@@ -463,22 +830,26 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
+  function ico(naam) {
+    return '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-' + naam + '"/></svg>';
+  }
 
   /* ---------- Testgegevens (alleen startgegevens voor de demo) ---------- */
   function testgegevens() {
     var rijen = [
       ["Pieter van Dijk", "Van Dijk Vastgoed", "p.vandijk@vandijkvastgoed.example", 14850, -12, -2, "Opvolgen"],
-      ["Sanne Bakker", "Bakker & Zn Bakkerij", "sanne@bakkerenzn.example", 6250, -9, 0, "Nieuw"],
+      ["Sanne Bakker", "Bakker & Zn Bakkerij", "sanne@bakkerenzn.example", 6250, -9, 0, "Verstuurd"],
       ["Mohamed El Amrani", "Amrani Horeca B.V.", "m.elamrani@amranihoreca.example", 23900, -15, -5, "Opvolgen"],
-      ["Lotte Jansen", "Jansen Tandartspraktijk", "lotte@jansentandarts.example", 8400, -6, 1, "Nieuw"],
+      ["Lotte Jansen", "Jansen Tandartspraktijk", "lotte@jansentandarts.example", 8400, -6, 1, "Verstuurd"],
       ["Henk Visser", "Visser Fietsen", "henk@visserfietsen.example", 3150, -20, -10, "Opvolgen"],
-      ["Fatima Yilmaz", "Yilmaz Supermarkt", "fatima@yilmazsuper.example", 31200, -30, -14, "Gewonnen"],
-      ["Willem de Groot", "De Groot Transport", "w.degroot@degroottransport.example", 12700, -25, -11, "Verloren"],
-      ["Emma Smit", "Smit Architecten", "emma@smitarchitecten.example", 5980, -3, 4, "Nieuw"],
+      ["Fatima Yilmaz", "Yilmaz Supermarkt", "fatima@yilmazsuper.example", 31200, -30, -14, "Akkoord"],
+      ["Willem de Groot", "De Groot Transport", "w.degroot@degroottransport.example", 12700, -25, -11, "Afgewezen"],
+      ["Emma Smit", "Smit Architecten", "emma@smitarchitecten.example", 5980, -3, 4, "Verstuurd"],
       ["Bram Mulder", "Mulder Loodgieters", "bram@mulderloodgieters.example", 18450, -8, 3, "Opvolgen"],
-      ["Anouk Peters", "Peters Kinderopvang", "anouk@peterskinderopvang.example", 9650, -18, -8, "Gewonnen"],
-      ["Joris Hendriks", "Hendriks Tuincentrum", "joris@hendrikstuin.example", 4275, -2, 6, "Nieuw"],
-      ["Ilse Kuipers", "Kuipers Sportschool", "ilse@kuipersgym.example", 15300, -14, -3, "Opvolgen"]
+      ["Anouk Peters", "Peters Kinderopvang", "anouk@peterskinderopvang.example", 9650, -18, -8, "Akkoord"],
+      ["Joris Hendriks", "Hendriks Tuincentrum", "joris@hendrikstuin.example", 4275, -2, 6, "Concept"],
+      ["Ilse Kuipers", "Kuipers Sportschool", "ilse@kuipersgym.example", 15300, -14, -3, "Opvolgen"],
+      ["Karin Dekker", "Dekker Installatieadvies", "karin@dekkerinstallatie.example", 7350, 0, 5, "Concept"]
     ];
     return rijen.map(function (r, i) {
       return {
@@ -489,44 +860,238 @@
     });
   }
 
+  /* ---------- Gegevens controleren en omzetten naar de nieuwe statussen ---------- */
+  function geldigeDatum(s) { return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s); }
+
+  function normaliseerStatus(s) {
+    var sleutel = String(s == null ? "" : s).trim().toLowerCase();
+    return STATUS_MIGRATIE[sleutel] || "Verstuurd";
+  }
+
+  function normaliseerOfferte(o, i) {
+    var n = {};
+    for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) n[k] = o[k]; }
+    var bedrag = parseFloat(o.bedrag);
+    n.id = o.id ? String(o.id) : "m-" + Date.now() + "-" + i;
+    n.klantnaam = String(o.klantnaam == null ? "" : o.klantnaam);
+    n.bedrijfsnaam = String(o.bedrijfsnaam == null ? "" : o.bedrijfsnaam);
+    n.email = String(o.email == null ? "" : o.email);
+    n.bedrag = isNaN(bedrag) ? 0 : bedrag;
+    n.offertedatum = geldigeDatum(o.offertedatum) ? o.offertedatum : vandaag();
+    n.opvolgdatum = geldigeDatum(o.opvolgdatum) ? o.opvolgdatum : n.offertedatum;
+    n.status = normaliseerStatus(o.status);
+    return n;
+  }
+
+  /* ---------- Meldingen (toasts) ---------- */
+  function toon(tekst, soort) {
+    soort = soort || "succes";
+    var houder = document.getElementById("toasts");
+    if (!houder) return;
+    var t = document.createElement("div");
+    t.className = "toast toast-" + soort;
+    t.setAttribute("role", soort === "fout" ? "alert" : "status");
+    t.innerHTML = '<svg class="ico toast-ico" aria-hidden="true"><use href="#i-' + (soort === "fout" ? "alert" : "check-circle") + '"/></svg>' +
+      '<div class="toast-tekst"></div>' +
+      '<button type="button" class="btn btn-ghost btn-sm btn-icon toast-sluit" aria-label="Melding sluiten" title="Melding sluiten">' + ico("x") + '</button>';
+    t.querySelector(".toast-tekst").textContent = tekst;
+    var sluit = function () { if (t.parentNode) t.parentNode.removeChild(t); };
+    t.querySelector(".toast-sluit").addEventListener("click", sluit);
+    houder.appendChild(t);
+    while (houder.children.length > 3) houder.removeChild(houder.firstChild);
+    setTimeout(sluit, soort === "fout" ? 8000 : 4500);
+  }
+
   /* ---------- Opslaan en laden ---------- */
   function opslaan() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(offertes)); }
-    catch (e) { /* opslag niet beschikbaar: app blijft werken, maar bewaart niets */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(offertes)); return true; }
+    catch (e) {
+      if (!opslagFoutGemeld) {
+        opslagFoutGemeld = true;
+        toon("Opslaan in de browser is niet gelukt. Je wijzigingen blijven zichtbaar tot je de pagina sluit.", "fout");
+      }
+      return false;
+    }
+  }
+  function bewaarReservekopie(raw) {
+    try { if (raw && !localStorage.getItem(BACKUP_KEY)) localStorage.setItem(BACKUP_KEY, raw); }
+    catch (e) { /* niet erg */ }
   }
   function laden() {
+    var raw = null;
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (Array.isArray(data)) { offertes = data; return; }
+        if (Array.isArray(data)) {
+          var heeftOudeStatus = data.some(function (o) {
+            return o && typeof o === "object" && STATUSSEN.indexOf(o.status) === -1;
+          });
+          offertes = data
+            .filter(function (o) { return o && typeof o === "object"; })
+            .map(normaliseerOfferte);
+          if (heeftOudeStatus) bewaarReservekopie(raw);
+          opslaan();
+          return;
+        }
       }
-    } catch (e) { /* ga door met testgegevens */ }
+    } catch (e) {
+      bewaarReservekopie(raw);
+    }
     offertes = testgegevens();
     opslaan();
   }
 
   /* ---------- Onderdelen op de pagina ---------- */
   var el = {
+    paginaTitel: document.getElementById("paginaTitel"),
     datumRegel: document.getElementById("datumRegel"),
     alertBar: document.getElementById("alertBar"),
     stats: document.getElementById("stats"),
+    workflow: document.getElementById("workflow"),
     followups: document.getElementById("followups"),
     tbody: document.getElementById("tbody"),
+    tabelWrap: document.getElementById("tabelWrap"),
     tableEmpty: document.getElementById("tableEmpty"),
     count: document.getElementById("count"),
     zoek: document.getElementById("zoek"),
     filterStatus: document.getElementById("filterStatus"),
     sorteer: document.getElementById("sorteer"),
+    wisFilters: document.getElementById("wisFilters"),
     form: document.getElementById("quoteForm"),
-    formError: document.getElementById("formError"),
+    menu: document.getElementById("actieMenu"),
     dialog: document.getElementById("deleteDialog"),
-    dlgDetail: document.getElementById("dlgDetail")
+    dlgTitel: document.getElementById("dlgTitel"),
+    dlgTekst: document.getElementById("dlgTekst"),
+    dlgDetail: document.getElementById("dlgDetail"),
+    dlgIcoon: document.getElementById("dlgIcoon"),
+    dlgConfirm: document.getElementById("dlgConfirm")
   };
 
-  function isOpen(o) { return o.status === "Nieuw" || o.status === "Opvolgen"; }
-  function heeftActieNodig(o) { return isOpen(o) && o.opvolgdatum <= vandaag(); }
+  /* ---------- Status en waarschuwingen ---------- */
+  // Uitstaand = verstuurd naar de klant en nog geen antwoord (Verstuurd of Opvolgen).
+  function isConcept(o) { return o.status === "Concept"; }
+  function isUitstaand(o) { return o.status === "Verstuurd" || o.status === "Opvolgen"; }
+
+  // Waarschuwing (geen status): alleen voor uitstaande offertes, gebaseerd op de opvolgdatum.
+  function waarschuwing(o) {
+    if (!isUitstaand(o)) return "";
+    var v = vandaag();
+    if (o.opvolgdatum < v) return "telaat";
+    if (o.opvolgdatum === v) return "vandaag";
+    return "";
+  }
+  function heeftActieNodig(o) { return waarschuwing(o) !== ""; }
   function actieLijst() { return offertes.filter(heeftActieNodig); }
+
+  // Waarschuwingsbadge: vierkant met pictogram, dus nooit te verwarren met een statuslabel.
+  function waarschuwingBadge(o) {
+    var w = waarschuwing(o);
+    if (w === "telaat") {
+      return '<span class="w-badge w-telaat">' + ico("alert") + 'Te laat · ' + dagenTekst(verschilInDagen(vandaag(), o.opvolgdatum)) + '</span>';
+    }
+    if (w === "vandaag") {
+      return '<span class="w-badge w-vandaag">' + ico("clock") + 'Vandaag opvolgen</span>';
+    }
+    return "";
+  }
+
+  function volgendeStap(o) {
+    if (o.status === "Concept") return "Verstuur de offerte naar de klant";
+    if (isUitstaand(o)) {
+      if (heeftActieNodig(o)) return "Neem contact op met de klant";
+      return o.status === "Verstuurd" ? "Wacht op reactie van de klant" : "Wacht op de beslissing van de klant";
+    }
+    return "Afgerond";
+  }
+
+  // Zet een nieuwe status. Gaat een offerte (opnieuw) naar de klant en staat de opvolgdatum
+  // al in het verleden, dan wordt de opvolgdatum over 7 dagen gezet zodat er geen valse waarschuwing ontstaat.
+  function zetStatus(o, nieuw) {
+    var oud = o.status;
+    o.status = nieuw;
+    if ((nieuw === "Verstuurd" || nieuw === "Opvolgen") &&
+        (oud === "Concept" || oud === "Akkoord" || oud === "Afgewezen") &&
+        o.opvolgdatum <= vandaag()) {
+      o.opvolgdatum = dagenVanNu(7);
+    }
+  }
+
+  /* ---------- Knoppen per offerte ---------- */
+  function knop(klasse, actie, id, icoon, label, titel) {
+    return '<button type="button" class="btn btn-sm ' + klasse + '" data-actie="' + actie + '" data-id="' + id + '"' +
+      (titel ? ' title="' + esc(titel) + '"' : '') + '>' + ico(icoon) + '<span>' + label + '</span></button>';
+  }
+  // De belangrijkste volgende actie, altijd in petrol (of rustig secundair bij afgeronde offertes).
+  function hoofdActie(o) {
+    var id = esc(o.id);
+    if (isConcept(o)) return knop("btn-primary", "verstuurd", id, "send", "Markeer als verstuurd", "Zet de status op Verstuurd");
+    if (isUitstaand(o)) return knop("btn-primary", "opgevolgd", id, "phone", "Opgevolgd (+7 dagen)", "Zet de status op Opvolgen en de volgende opvolgdatum op over 7 dagen");
+    return knop("btn-secondary", "heropenen", id, "undo", "Heropenen", "Zet de offerte terug naar Opvolgen");
+  }
+  function besluitKnoppen(o) {
+    if (!isUitstaand(o)) return "";
+    var id = esc(o.id);
+    return knop("btn-akkoord", "akkoord", id, "check", "Akkoord", "Markeer als akkoord") +
+           knop("btn-afgewezen", "afgewezen", id, "x", "Afgewezen", "Markeer als afgewezen");
+  }
+  function menuKnop(o) {
+    return '<button type="button" class="btn btn-secondary btn-sm btn-icon" data-menu="' + esc(o.id) + '" aria-haspopup="menu" aria-expanded="false" ' +
+      'aria-label="Meer acties voor ' + esc(o.klantnaam) + '" title="Meer acties">' + ico("more") + '</button>';
+  }
+  function menuItems(o) {
+    var items = [];
+    if (isUitstaand(o)) {
+      items.push({ actie: "akkoord", label: "Markeer als akkoord", icoon: "check", soort: "akkoord" });
+      items.push({ actie: "afgewezen", label: "Markeer als afgewezen", icoon: "x", soort: "afgewezen" });
+      items.push({ scheiding: true });
+    }
+    items.push({ actie: "verwijder", label: "Verwijderen…", icoon: "trash", soort: "gevaar" });
+    return items;
+  }
+
+  /* ---------- Actiemenu ---------- */
+  function vindMenuKnop(id) {
+    var knoppen = document.querySelectorAll("button[data-menu]");
+    for (var i = 0; i < knoppen.length; i++) if (knoppen[i].getAttribute("data-menu") === id) return knoppen[i];
+    return null;
+  }
+  function sluitMenu(focusTerug) {
+    if (el.menu.hidden) return;
+    var trigger = menuKnopId ? vindMenuKnop(menuKnopId) : null;
+    el.menu.hidden = true;
+    el.menu.innerHTML = "";
+    menuKnopId = null;
+    Array.prototype.forEach.call(document.querySelectorAll("button[data-menu]"), function (b) { b.setAttribute("aria-expanded", "false"); });
+    if (focusTerug && trigger) trigger.focus();
+  }
+  function openMenu(knopEl) {
+    sluitMenu(false);
+    var id = knopEl.getAttribute("data-menu");
+    var o = zoekOfferte(id);
+    if (!o) return;
+    el.menu.innerHTML = menuItems(o).map(function (it) {
+      if (it.scheiding) return '<div class="menu-sep" role="separator"></div>';
+      return '<button type="button" role="menuitem" class="menu-item menu-' + it.soort + '" data-actie="' + it.actie + '" data-id="' + esc(o.id) + '">' +
+        ico(it.icoon) + '<span>' + it.label + '</span></button>';
+    }).join("");
+    menuKnopId = id;
+    knopEl.setAttribute("aria-expanded", "true");
+    el.menu.hidden = false;
+    var r = knopEl.getBoundingClientRect();
+    var mb = el.menu.offsetWidth, mh = el.menu.offsetHeight;
+    var links = Math.min(Math.max(8, r.right - mb), window.innerWidth - mb - 8);
+    var boven = r.bottom + 6;
+    if (boven + mh > window.innerHeight - 8) boven = Math.max(8, r.top - mh - 6);
+    el.menu.style.left = links + "px";
+    el.menu.style.top = boven + "px";
+    var eerste = el.menu.querySelector(".menu-item");
+    if (eerste) eerste.focus({ preventScroll: true });
+  }
+  function wisselMenu(knopEl) {
+    if (!el.menu.hidden && menuKnopId === knopEl.getAttribute("data-menu")) sluitMenu(true);
+    else openMenu(knopEl);
+  }
 
   /* ---------- Datumregel bovenaan ---------- */
   function renderDatum() {
@@ -539,81 +1104,133 @@
 
   /* ---------- Melding bovenaan ---------- */
   function renderAlert() {
-    var v = vandaag();
     var lijst = actieLijst();
     if (!lijst.length) {
-      el.alertBar.innerHTML = '<div class="alert groen"><span><strong>Alles bijgewerkt.</strong> Er zijn geen offertes die vandaag opgevolgd moeten worden.</span></div>';
+      el.alertBar.innerHTML = '<div class="alert groen">' + ico("check-circle") +
+        '<div class="alert-tekst"><strong>Alles bijgewerkt.</strong> Er zijn geen offertes die vandaag opgevolgd moeten worden.</div></div>';
       return;
     }
-    var teLaat = lijst.filter(function (o) { return o.opvolgdatum < v; }).length;
+    var teLaat = lijst.filter(function (o) { return waarschuwing(o) === "telaat"; }).length;
     var vandaagN = lijst.length - teLaat;
     var delen = [];
     if (teLaat) delen.push(teLaat + " te laat");
-    if (vandaagN) delen.push(vandaagN + " vandaag");
+    if (vandaagN) delen.push(vandaagN + " vandaag opvolgen");
     var soort = teLaat ? "rood" : "amber";
     el.alertBar.innerHTML =
-      '<div class="alert ' + soort + '"><span><strong>' + lijst.length + (lijst.length === 1 ? " offerte moet" : " offertes moeten") +
-      ' worden opgevolgd</strong> (' + delen.join(", ") + ').</span>' +
-      '<button type="button" class="btn btn-primary btn-small" data-actie="toonActie">Toon deze offertes</button></div>';
+      '<div class="alert ' + soort + '">' + ico(teLaat ? "alert" : "clock") +
+      '<div class="alert-tekst"><strong>' + lijst.length + (lijst.length === 1 ? " offerte moet" : " offertes moeten") +
+      ' worden opgevolgd</strong> (' + delen.join(", ") + ').</div>' +
+      '<button type="button" class="btn btn-primary btn-sm" data-actie="toonActie">Toon deze offertes</button></div>';
+  }
+
+  /* ---------- Tellers in de navigatie ---------- */
+  function renderNavTellers() {
+    var teDoen = actieLijst();
+    var teLaat = teDoen.filter(function (o) { return waarschuwing(o) === "telaat"; }).length;
+    Array.prototype.forEach.call(document.querySelectorAll(".js-opv-count"), function (n) {
+      if (teDoen.length) {
+        n.hidden = false;
+        n.textContent = teDoen.length;
+        n.className = "nav-count js-opv-count " + (teLaat ? "telaat" : "vandaag");
+        n.setAttribute("title", teDoen.length + (teDoen.length === 1 ? " offerte" : " offertes") + " om op te volgen");
+      } else {
+        n.hidden = true;
+      }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".js-offerte-count"), function (n) {
+      n.textContent = offertes.length;
+    });
   }
 
   /* ---------- Dashboardkaarten ---------- */
+  function som(lijst) { return lijst.reduce(function (s, o) { return s + o.bedrag; }, 0); }
+
+  function kaart(tint, icoon, label, waarde, hint, extra, attrs) {
+    return '<div class="stat' + (attrs ? " clickable" : "") + '"' + (attrs || "") + '>' +
+      '<div class="stat-top"><span class="stat-label">' + esc(label) + '</span>' +
+      '<span class="stat-ico tint-' + tint + '">' + ico(icoon) + '</span></div>' +
+      '<div class="stat-value tekst-' + tint + '">' + esc(waarde) + '</div>' +
+      '<div class="stat-hint">' + esc(hint) + '</div>' + (extra || "") + '</div>';
+  }
+
   function renderStats() {
-    var v = vandaag();
-    var open = offertes.filter(isOpen);
-    var openWaarde = open.reduce(function (s, o) { return s + o.bedrag; }, 0);
+    var uitstaand = offertes.filter(isUitstaand);
+    var concepten = offertes.filter(isConcept);
     var teDoen = actieLijst();
-    var teLaat = teDoen.filter(function (o) { return o.opvolgdatum < v; }).length;
-    var gewonnen = offertes.filter(function (o) { return o.status === "Gewonnen"; });
-    var verloren = offertes.filter(function (o) { return o.status === "Verloren"; });
-    var gewonnenWaarde = gewonnen.reduce(function (s, o) { return s + o.bedrag; }, 0);
-    var afgerond = gewonnen.length + verloren.length;
-    var winst = afgerond ? Math.round((gewonnen.length / afgerond) * 100) + "%" : "–";
+    var teLaat = teDoen.filter(function (o) { return waarschuwing(o) === "telaat"; }).length;
+    var akkoord = offertes.filter(function (o) { return o.status === "Akkoord"; });
+    var afgewezen = offertes.filter(function (o) { return o.status === "Afgewezen"; });
+    var afgerond = akkoord.length + afgewezen.length;
+    var percentage = afgerond ? Math.round((akkoord.length / afgerond) * 100) + "%" : "–";
 
     var soort = teLaat ? "rood" : (teDoen.length ? "amber" : "groen");
     var detail = teDoen.length
-      ? teLaat + " te laat · " + (teDoen.length - teLaat) + " vandaag"
+      ? teLaat + " te laat · " + (teDoen.length - teLaat) + " vandaag opvolgen"
       : "Alles bijgewerkt";
 
+    var openHint = bedragTekst(som(uitstaand)) + " uitstaand bij klanten";
+    if (concepten.length) openHint += " · " + concepten.length + (concepten.length === 1 ? " concept" : " concepten") + " te versturen";
+
     el.stats.innerHTML =
-      kaart("", "Openstaande offertes", open.length, bedragTekst(openWaarde) + " in de pijplijn") +
-      '<div class="stat clickable ' + soort + '" data-actie="toonActie" role="button" tabindex="0" aria-label="Toon offertes die opgevolgd moeten worden">' +
-        '<div class="label">Opvolging nodig</div>' +
-        '<div class="value">' + teDoen.length + '</div>' +
-        '<div class="hint">' + esc(detail) + '</div>' +
-        (teDoen.length ? '<div class="toon">Toon offertes →</div>' : '') +
-      '</div>' +
-      kaart("groen", "Gewonnen omzet", bedragTekst(gewonnenWaarde), gewonnen.length + (gewonnen.length === 1 ? " gewonnen offerte" : " gewonnen offertes")) +
-      kaart("", "Winstpercentage", winst, afgerond ? gewonnen.length + " van " + afgerond + " afgerond" : "Nog geen afgeronde offertes");
+      kaart("petrol", "file", "Openstaande offertes", uitstaand.length, openHint) +
+      kaart(soort, soort === "groen" ? "check-circle" : "bell", "Opvolging nodig", teDoen.length, detail,
+        teDoen.length ? '<div class="stat-link">Toon offertes →</div>' : "",
+        ' data-actie="toonActie" role="button" tabindex="0" aria-label="Toon offertes die opgevolgd moeten worden"') +
+      kaart("groen", "check-circle", "Omzet akkoord", bedragTekst(som(akkoord)), akkoord.length + (akkoord.length === 1 ? " offerte akkoord" : " offertes akkoord")) +
+      kaart("navy", "trend", "Akkoordpercentage", percentage, afgerond ? akkoord.length + " van " + afgerond + " afgerond" : "Nog geen afgeronde offertes");
   }
-  function kaart(klasse, label, waarde, hint) {
-    return '<div class="stat ' + klasse + '"><div class="label">' + esc(label) + '</div>' +
-           '<div class="value">' + esc(waarde) + '</div><div class="hint">' + esc(hint) + '</div></div>';
+
+  /* ---------- Overzicht per status ---------- */
+  var FILTER_KLASSEN = ["st-Concept", "st-Verstuurd", "st-Opvolgen", "st-Akkoord", "st-Afgewezen", "filter-telaat", "filter-vandaag", "filter-gekleurd"];
+
+  // De filterlijst krijgt de kleur van de gekozen status of waarschuwing.
+  function kleurFilter() {
+    var v = el.filterStatus.value;
+    FILTER_KLASSEN.forEach(function (k) { el.filterStatus.classList.remove(k); });
+    if (STATUSSEN.indexOf(v) !== -1) {
+      el.filterStatus.classList.add("st-" + v);
+      el.filterStatus.classList.add("filter-gekleurd");
+    } else if (v === "TeLaat") {
+      el.filterStatus.classList.add("filter-telaat");
+      el.filterStatus.classList.add("filter-gekleurd");
+    } else if (v === "Vandaag") {
+      el.filterStatus.classList.add("filter-vandaag");
+      el.filterStatus.classList.add("filter-gekleurd");
+    }
+  }
+
+  function renderWorkflow() {
+    kleurFilter();
+    var actief = el.filterStatus.value;
+    el.workflow.innerHTML = STATUSSEN.map(function (s) {
+      var lijst = offertes.filter(function (o) { return o.status === s; });
+      return '<button type="button" class="wf-tile wf-' + s + '" data-filter="' + s + '" aria-pressed="' + (actief === s ? "true" : "false") + '">' +
+        '<span class="pill st-' + s + '">' + s + '</span>' +
+        '<span class="wf-count">' + lijst.length + '</span>' +
+        '<span class="wf-val">' + bedragTekst(som(lijst)) + '</span></button>';
+    }).join("");
   }
 
   /* ---------- Lijst: opvolgen vandaag of eerder ---------- */
   function renderFollowups() {
-    var v = vandaag();
     var lijst = actieLijst().sort(function (a, b) { return a.opvolgdatum < b.opvolgdatum ? -1 : 1; });
 
     if (!lijst.length) {
-      el.followups.innerHTML = '<div class="empty">Geen openstaande opvolgingen. Alles is bijgewerkt.</div>';
+      el.followups.innerHTML = '<div class="leeg"><span class="leeg-ico">' + ico("check-circle") + '</span>' +
+        '<h3>Alles bijgewerkt</h3>' +
+        '<p>Er zijn geen offertes die vandaag of te laat opgevolgd moeten worden. Mooi werk.</p>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-leeg="tabel">' + ico("file") + '<span>Bekijk alle offertes</span></button></div>';
       return;
     }
     el.followups.innerHTML = lijst.map(function (o) {
-      var dagenTeLaat = verschilInDagen(v, o.opvolgdatum);
-      var tag = dagenTeLaat === 0
-        ? '<span class="tag-today">Vandaag opvolgen</span>'
-        : '<span class="tag-late">' + dagenTekst(dagenTeLaat) + ' te laat</span>';
-      return '<div class="fu-item ' + (dagenTeLaat > 0 ? "late" : "") + '">' +
+      var teLaat = waarschuwing(o) === "telaat";
+      return '<div class="fu-item ' + (teLaat ? "late" : "") + '">' +
         '<div class="fu-top"><div><div class="fu-name">' + esc(o.klantnaam) + '</div>' +
         '<div class="fu-sub">' + esc(o.bedrijfsnaam) + ' · ' + esc(o.email) + '</div></div>' +
-        '<div style="text-align:right"><div class="fu-amount">' + bedragTekst(o.bedrag) + '</div>' + tag + '</div></div>' +
-        '<div class="fu-actions">' +
-        '<button type="button" class="btn btn-small btn-win" data-actie="gewonnen" data-id="' + esc(o.id) + '">Gewonnen</button>' +
-        '<button type="button" class="btn btn-small btn-lose" data-actie="verloren" data-id="' + esc(o.id) + '">Verloren</button>' +
-        '<button type="button" class="btn btn-small btn-ghost" data-actie="uitstellen" data-id="' + esc(o.id) + '">Opvolgen over 7 dagen</button>' +
-        '</div></div>';
+        '<div><div class="fu-amount">' + bedragTekst(o.bedrag) + '</div>' +
+        '<div class="w-wrap">' + waarschuwingBadge(o) + '</div></div></div>' +
+        '<div class="fu-next"><span class="pill st-' + o.status + '">' + o.status + '</span><span>Volgende stap: <b>' + esc(volgendeStap(o)) + '</b></span></div>' +
+        '<div class="fu-actions">' + hoofdActie(o) + besluitKnoppen(o) + '</div></div>';
     }).join("");
   }
 
@@ -623,20 +1240,23 @@
     var filter = el.filterStatus.value;
     var lijst = offertes.filter(function (o) {
       if (filter === "ActieNodig") { if (!heeftActieNodig(o)) return false; }
+      else if (filter === "TeLaat") { if (waarschuwing(o) !== "telaat") return false; }
+      else if (filter === "Vandaag") { if (waarschuwing(o) !== "vandaag") return false; }
       else if (filter !== "Alle" && o.status !== filter) return false;
       if (!q) return true;
       return (o.klantnaam + " " + o.bedrijfsnaam + " " + o.email).toLowerCase().indexOf(q) !== -1;
     });
     var sort = el.sorteer.value;
+    function rang(o) { return isUitstaand(o) ? 0 : (isConcept(o) ? 1 : 2); }
     lijst.sort(function (a, b) {
       if (sort === "bedrag") return b.bedrag - a.bedrag;
       if (sort === "nieuwste") return a.offertedatum < b.offertedatum ? 1 : -1;
       if (sort === "urgent") {
-        // Open offertes eerst, daarbinnen de oudste opvolgdatum bovenaan (bij gelijke datum: hoogste bedrag eerst).
-        // Gewonnen en verloren offertes komen onderaan.
-        var ao = isOpen(a), bo = isOpen(b);
-        if (ao !== bo) return ao ? -1 : 1;
-        if (ao) {
+        // Uitstaande offertes eerst (oudste opvolgdatum bovenaan, bij gelijke datum het hoogste bedrag),
+        // daarna concepten, en afgeronde offertes (akkoord of afgewezen) onderaan.
+        var ra = rang(a), rb = rang(b);
+        if (ra !== rb) return ra - rb;
+        if (ra < 2) {
           if (a.opvolgdatum !== b.opvolgdatum) return a.opvolgdatum < b.opvolgdatum ? -1 : 1;
           return b.bedrag - a.bedrag;
         }
@@ -647,45 +1267,66 @@
     return lijst;
   }
 
+  function filtersActief() {
+    return el.zoek.value.trim() !== "" || el.filterStatus.value !== "Alle" || el.sorteer.value !== "urgent";
+  }
+
+  function renderLeeg(lijst) {
+    if (lijst.length) {
+      el.tableEmpty.hidden = true;
+      el.tableEmpty.innerHTML = "";
+      el.tabelWrap.hidden = false;
+      return;
+    }
+    el.tabelWrap.hidden = true;
+    if (!offertes.length) {
+      el.tableEmpty.innerHTML = '<div class="leeg"><span class="leeg-ico">' + ico("inbox") + '</span>' +
+        '<h3>Nog geen offertes</h3>' +
+        '<p>Voeg je eerste offerte toe om te beginnen. OffertePilot waarschuwt je zodra een opvolging nodig is.</p>' +
+        '<button type="button" class="btn btn-primary" data-leeg="nieuw">' + ico("plus") + '<span>Eerste offerte toevoegen</span></button></div>';
+    } else {
+      el.tableEmpty.innerHTML = '<div class="leeg"><span class="leeg-ico">' + ico("search") + '</span>' +
+        '<h3>Geen offertes gevonden</h3>' +
+        '<p>Er zijn geen offertes die passen bij je zoekopdracht of filter. Probeer iets anders of wis de filters.</p>' +
+        '<button type="button" class="btn btn-secondary" data-leeg="wis">' + ico("x") + '<span>Filters wissen</span></button></div>';
+    }
+    el.tableEmpty.hidden = false;
+  }
+
   function renderTable() {
     var lijst = gefilterdeLijst();
-    var v = vandaag();
     el.tbody.innerHTML = lijst.map(function (o) {
-      var open = isOpen(o);
-      var verschil = verschilInDagen(v, o.opvolgdatum);   // > 0 = te laat, 0 = vandaag
-      var teLaat = open && verschil > 0;
-      var vandaagDoen = open && verschil === 0;
-      var rijKlasse = teLaat ? "row-late" : (vandaagDoen ? "row-today" : "");
-      var badge = teLaat
-        ? '<div><span class="due-badge due-late">' + dagenTekst(verschil) + ' te laat</span></div>'
-        : (vandaagDoen ? '<div><span class="due-badge due-today">Vandaag opvolgen</span></div>' : "");
+      var w = waarschuwing(o);
+      var rijKlasse = w === "telaat" ? "row-late" : (w === "vandaag" ? "row-today" : "");
+      var badge = w ? '<div class="w-wrap">' + waarschuwingBadge(o) + '</div>' : "";
 
       var opties = STATUSSEN.map(function (s) {
         return '<option value="' + s + '"' + (s === o.status ? " selected" : "") + '>' + s + '</option>';
       }).join("");
 
       var id = esc(o.id);
-      var acties = open
-        ? '<button type="button" class="btn btn-small btn-win" data-actie="gewonnen" data-id="' + id + '">Gewonnen</button>' +
-          '<button type="button" class="btn btn-small btn-lose" data-actie="verloren" data-id="' + id + '">Verloren</button>'
-        : '<button type="button" class="btn btn-small btn-ghost" data-actie="heropenen" data-id="' + id + '">Heropenen</button>';
 
       return '<tr class="' + rijKlasse + '">' +
-        '<td data-label=""><div class="cust-name">' + esc(o.klantnaam) + '</div><div class="cust-sub">' + esc(o.bedrijfsnaam) + '</div></td>' +
-        '<td data-label="E-mail">' + esc(o.email) + '</td>' +
+        '<td data-label=""><div class="cust-name">' + esc(o.klantnaam) + '</div>' +
+          '<div class="cust-sub">' + esc(o.bedrijfsnaam) + '</div>' +
+          '<div class="cust-sub">' + esc(o.email) + '</div></td>' +
         '<td class="num" data-label="Bedrag"><strong>' + bedragTekst(o.bedrag) + '</strong></td>' +
         '<td data-label="Offertedatum">' + datumNL(o.offertedatum) + '</td>' +
         '<td data-label="Opvolgdatum"><div class="datum-cel"><span>' + datumNL(o.opvolgdatum) + '</span>' + badge + '</div></td>' +
-        '<td data-label="Status"><select class="status-select st-' + o.status + '" data-id="' + id + '" aria-label="Status wijzigen">' + opties + '</select></td>' +
-        '<td class="acties-cel" data-label="Acties"><div class="row-actions">' + acties +
-        '<button type="button" class="btn btn-small btn-del" data-actie="verwijder" data-id="' + id + '">Verwijderen</button></div></td>' +
+        '<td data-label="Status"><div class="status-cel">' +
+          '<select class="status-select st-' + o.status + '" data-id="' + id + '" aria-label="Status wijzigen voor ' + esc(o.klantnaam) + '">' + opties + '</select>' +
+          '<div class="volgende">' + esc(volgendeStap(o)) + '</div></div></td>' +
+        '<td class="acties-cel" data-label="Acties"><div class="acties">' + hoofdActie(o) + menuKnop(o) + '</div></td>' +
         '</tr>';
     }).join("");
-    el.tableEmpty.style.display = lijst.length ? "none" : "block";
+    renderLeeg(lijst);
     el.count.textContent = lijst.length + " van " + offertes.length + " offertes getoond";
+    el.wisFilters.disabled = !filtersActief();
   }
 
-  function renderAlles() { renderDatum(); renderAlert(); renderStats(); renderFollowups(); renderTable(); }
+  function renderAlles() {
+    renderDatum(); renderAlert(); renderNavTellers(); renderStats(); renderWorkflow(); renderFollowups(); renderTable();
+  }
 
   /* ---------- Acties ---------- */
   function zoekOfferte(id) {
@@ -693,59 +1334,173 @@
     return null;
   }
 
+  function naarTabel() {
+    document.getElementById("tabelKaart").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function naarFormulier() {
+    document.getElementById("sectie-nieuw").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("klantnaam").focus({ preventScroll: true });
+  }
+
+  function wisFilters() {
+    el.zoek.value = "";
+    el.filterStatus.value = "Alle";
+    el.sorteer.value = "urgent";
+    renderTable();
+    renderWorkflow();
+  }
+
   function toonActieNodig() {
     el.zoek.value = "";
     el.filterStatus.value = "ActieNodig";
     el.sorteer.value = "urgent";
     renderTable();
-    document.getElementById("tabelKaart").scrollIntoView({ behavior: "smooth", block: "start" });
+    renderWorkflow();
+    naarTabel();
+  }
+
+  /* ---------- Bevestigingsvenster ---------- */
+  function vraagBevestiging(opt) {
+    if (typeof el.dialog.showModal !== "function") {
+      if (confirm(opt.titel + " " + opt.tekst)) opt.actie();
+      return;
+    }
+    bevestigActie = opt.actie;
+    el.dlgTitel.textContent = opt.titel;
+    el.dlgTekst.textContent = opt.tekst;
+    el.dlgIcoon.innerHTML = ico(opt.icoon || "alert");
+    el.dlgDetail.innerHTML = opt.detail || "";
+    el.dlgDetail.hidden = !opt.detail;
+    el.dlgConfirm.querySelector("span").textContent = opt.knop;
+    el.dialog.showModal();
   }
 
   function verwijderNu(id) {
+    var o = zoekOfferte(id);
+    var naam = o ? o.klantnaam : "";
     offertes = offertes.filter(function (x) { return x.id !== id; });
     opslaan();
     renderAlles();
+    toon("Offerte van " + naam + " is verwijderd.");
   }
 
   function vraagVerwijderen(o) {
-    if (typeof el.dialog.showModal === "function") {
-      teVerwijderenId = o.id;
-      el.dlgDetail.innerHTML = "<strong>" + esc(o.klantnaam) + "</strong> · " + esc(o.bedrijfsnaam) +
-        "<br>" + bedragTekst(o.bedrag) + " · opvolgdatum " + datumNL(o.opvolgdatum);
-      el.dialog.showModal();
-    } else if (confirm("Offerte van " + o.klantnaam + " definitief verwijderen? Dit kan niet ongedaan worden gemaakt.")) {
-      verwijderNu(o.id);
-    }
+    vraagBevestiging({
+      titel: "Offerte definitief verwijderen?",
+      tekst: "Dit kan niet ongedaan worden gemaakt.",
+      icoon: "trash",
+      detail: "<strong>" + esc(o.klantnaam) + "</strong> · " + esc(o.bedrijfsnaam) +
+        "<br>" + bedragTekst(o.bedrag) + " · opvolgdatum " + datumNL(o.opvolgdatum),
+      knop: "Definitief verwijderen",
+      actie: function () { verwijderNu(o.id); }
+    });
+  }
+
+  function herstelTestgegevens() {
+    vraagBevestiging({
+      titel: "Testgegevens herstellen?",
+      tekst: "Alle huidige offertes worden vervangen door de testgegevens. Dit kan niet ongedaan worden gemaakt.",
+      icoon: "refresh",
+      detail: "",
+      knop: "Testgegevens herstellen",
+      actie: function () {
+        offertes = testgegevens();
+        opslaan();
+        renderAlles();
+        toon("De testgegevens zijn hersteld.");
+      }
+    });
   }
 
   function behandelKlik(e) {
-    var knop = e.target.closest("button[data-actie]");
-    if (!knop) return;
-    var id = knop.getAttribute("data-id");
-    var actie = knop.getAttribute("data-actie");
+    var knopEl = e.target.closest("button[data-actie]");
+    if (!knopEl) return;
+    var id = knopEl.getAttribute("data-id");
+    var actie = knopEl.getAttribute("data-actie");
     var o = zoekOfferte(id);
     if (!o) return;
 
     if (actie === "verwijder") { vraagVerwijderen(o); return; }
 
-    if (actie === "gewonnen") o.status = "Gewonnen";
-    else if (actie === "verloren") o.status = "Verloren";
-    else if (actie === "heropenen") o.status = "Opvolgen";
-    else if (actie === "uitstellen") { o.opvolgdatum = dagenVanNu(7); o.status = "Opvolgen"; }
+    var bericht = "";
+    if (actie === "verstuurd") {
+      zetStatus(o, "Verstuurd");
+      bericht = "Offerte van " + o.klantnaam + " is gemarkeerd als verstuurd.";
+    } else if (actie === "opgevolgd") {
+      o.status = "Opvolgen";
+      o.opvolgdatum = dagenVanNu(7);
+      bericht = "Opvolging vastgelegd voor " + o.klantnaam + ". Volgende opvolging op " + datumNL(o.opvolgdatum) + ".";
+    } else if (actie === "akkoord") {
+      o.status = "Akkoord";
+      bericht = "Offerte van " + o.klantnaam + " is akkoord.";
+    } else if (actie === "afgewezen") {
+      o.status = "Afgewezen";
+      bericht = "Offerte van " + o.klantnaam + " is afgewezen.";
+    } else if (actie === "heropenen") {
+      zetStatus(o, "Opvolgen");
+      bericht = "Offerte van " + o.klantnaam + " is heropend en staat op Opvolgen.";
+    } else {
+      return;
+    }
     opslaan();
     renderAlles();
+    toon(bericht);
   }
-  el.followups.addEventListener("click", behandelKlik);
-  el.tbody.addEventListener("click", behandelKlik);
+
+  function behandelLeeg(e) {
+    var k = e.target.closest("[data-leeg]");
+    if (!k) return;
+    var soort = k.getAttribute("data-leeg");
+    if (soort === "nieuw") naarFormulier();
+    else if (soort === "wis") wisFilters();
+    else if (soort === "tabel") naarTabel();
+  }
+
+  el.followups.addEventListener("click", function (e) { behandelLeeg(e); behandelKlik(e); });
+  el.tableEmpty.addEventListener("click", behandelLeeg);
+  el.tbody.addEventListener("click", function (e) {
+    var trigger = e.target.closest("button[data-menu]");
+    if (trigger) { wisselMenu(trigger); return; }
+    behandelKlik(e);
+  });
 
   el.tbody.addEventListener("change", function (e) {
     if (!e.target.classList.contains("status-select")) return;
     var o = zoekOfferte(e.target.getAttribute("data-id"));
     if (!o) return;
-    o.status = e.target.value;
+    zetStatus(o, e.target.value);
     opslaan();
     renderAlles();
+    toon("Status van " + o.klantnaam + " is gewijzigd naar " + o.status + ".");
   });
+
+  // Menu: klikken, toetsenbord, buiten klikken en scrollen
+  el.menu.addEventListener("click", function (e) {
+    var k = e.target.closest("button[data-actie]");
+    if (!k) return;
+    sluitMenu(false);
+    behandelKlik(e);
+  });
+  el.menu.addEventListener("keydown", function (e) {
+    var items = Array.prototype.slice.call(el.menu.querySelectorAll(".menu-item"));
+    if (!items.length) return;
+    var i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); items[(i <= 0 ? items.length : i) - 1].focus(); }
+    else if (e.key === "Home") { e.preventDefault(); items[0].focus(); }
+    else if (e.key === "End") { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === "Tab") { sluitMenu(false); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !el.menu.hidden) { e.preventDefault(); sluitMenu(true); }
+  });
+  document.addEventListener("click", function (e) {
+    if (el.menu.hidden) return;
+    if (e.target.closest("#actieMenu") || e.target.closest("button[data-menu]")) return;
+    sluitMenu(false);
+  });
+  window.addEventListener("scroll", function () { if (!el.menu.hidden) sluitMenu(false); }, true);
+  window.addEventListener("resize", function () { sluitMenu(false); });
 
   // Melding en dashboardkaart: toon alleen offertes die opgevolgd moeten worden
   el.alertBar.addEventListener("click", function (e) {
@@ -761,45 +1516,75 @@
     }
   });
 
-  // Bevestigingsvenster
-  document.getElementById("dlgCancel").addEventListener("click", function () {
-    teVerwijderenId = null;
-    el.dialog.close();
-  });
-  document.getElementById("dlgConfirm").addEventListener("click", function () {
-    var id = teVerwijderenId;
-    teVerwijderenId = null;
-    el.dialog.close();
-    if (id) verwijderNu(id);
-  });
-  el.dialog.addEventListener("close", function () { teVerwijderenId = null; });
-
-  [el.zoek, el.filterStatus, el.sorteer].forEach(function (x) {
-    x.addEventListener("input", renderTable);
-  });
-  document.getElementById("wisFilters").addEventListener("click", function () {
+  // Overzicht per status: klik om te filteren, nogmaals klikken haalt het filter weg
+  el.workflow.addEventListener("click", function (e) {
+    var k = e.target.closest("button[data-filter]");
+    if (!k) return;
+    var waarde = k.getAttribute("data-filter");
     el.zoek.value = "";
-    el.filterStatus.value = "Alle";
+    if (el.filterStatus.value === waarde) {
+      el.filterStatus.value = "Alle";
+      renderTable();
+      renderWorkflow();
+      return;
+    }
+    el.filterStatus.value = waarde;
     el.sorteer.value = "urgent";
     renderTable();
+    renderWorkflow();
+    naarTabel();
   });
 
-  /* ---------- Navigatie ---------- */
-  var navLinks = document.querySelectorAll("#nav a");
+  // Bevestigingsvenster
+  document.getElementById("dlgCancel").addEventListener("click", function () {
+    bevestigActie = null;
+    el.dialog.close();
+  });
+  el.dlgConfirm.addEventListener("click", function () {
+    var actie = bevestigActie;
+    bevestigActie = null;
+    el.dialog.close();
+    if (actie) actie();
+  });
+  el.dialog.addEventListener("close", function () { bevestigActie = null; });
+  el.dialog.addEventListener("click", function (e) {
+    if (e.target === el.dialog) el.dialog.close();   // klik op de achtergrond
+  });
+
+  [el.zoek, el.filterStatus, el.sorteer].forEach(function (x) {
+    x.addEventListener("input", function () { renderTable(); renderWorkflow(); });
+  });
+  el.wisFilters.addEventListener("click", wisFilters);
+
+  Array.prototype.forEach.call(document.querySelectorAll(".js-reset"), function (b) {
+    b.addEventListener("click", herstelTestgegevens);
+  });
+
+  /* ---------- Navigatie (zijbalk en mobiele balk) ---------- */
+  var navGroepen = document.querySelectorAll("[data-nav]");
   var navSecties = ["sectie-overzicht", "sectie-opvolgen", "tabelKaart"];
+  var navTitels = ["Overzicht", "Opvolgen", "Offertes"];
   var navBezig = false;
 
   function updateNav() {
     var actief = 0;
     navSecties.forEach(function (id, i) {
       var s = document.getElementById(id);
-      if (s && s.getBoundingClientRect().top <= 170) actief = i;
+      if (s && s.getBoundingClientRect().top <= 140) actief = i;
     });
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) actief = navSecties.length - 1;
-    for (var i = 0; i < navLinks.length; i++) {
-      if (i === actief) { navLinks[i].classList.add("actief"); navLinks[i].setAttribute("aria-current", "true"); }
-      else { navLinks[i].classList.remove("actief"); navLinks[i].removeAttribute("aria-current"); }
+    var doc = document.documentElement;
+    if (window.scrollY > 0 && doc.scrollHeight > window.innerHeight + 40 &&
+        window.innerHeight + window.scrollY >= doc.scrollHeight - 4) {
+      actief = navSecties.length - 1;
     }
+    Array.prototype.forEach.call(navGroepen, function (groep) {
+      var links = groep.querySelectorAll("a");
+      for (var i = 0; i < links.length; i++) {
+        if (i === actief) { links[i].classList.add("actief"); links[i].setAttribute("aria-current", "true"); }
+        else { links[i].classList.remove("actief"); links[i].removeAttribute("aria-current"); }
+      }
+    });
+    el.paginaTitel.textContent = navTitels[actief];
   }
   function opScroll() {
     if (navBezig) return;
@@ -809,58 +1594,102 @@
   window.addEventListener("scroll", opScroll, { passive: true });
   window.addEventListener("resize", opScroll);
 
-  document.getElementById("nieuweBtn").addEventListener("click", function () {
-    document.getElementById("sectie-nieuw").scrollIntoView({ behavior: "smooth", block: "start" });
-    document.getElementById("klantnaam").focus({ preventScroll: true });
-  });
+  document.getElementById("nieuweBtn").addEventListener("click", naarFormulier);
 
-  /* ---------- Formulier ---------- */
+  /* ---------- Formulier met validatie ---------- */
+  var VELDEN = ["klantnaam", "bedrijfsnaam", "email", "bedrag", "offertedatum", "opvolgdatum"];
+
+  function zetVeldFout(id, tekst) {
+    var inp = document.getElementById(id);
+    var f = document.getElementById("fout-" + id);
+    if (tekst) {
+      inp.setAttribute("aria-invalid", "true");
+      f.textContent = tekst;
+      f.hidden = false;
+    } else {
+      inp.removeAttribute("aria-invalid");
+      f.textContent = "";
+      f.hidden = true;
+    }
+  }
+  function wisFouten() { VELDEN.forEach(function (id) { zetVeldFout(id, ""); }); }
+
   function zetStandaardDatums() {
     document.getElementById("offertedatum").value = vandaag();
     document.getElementById("opvolgdatum").value = dagenVanNu(7);
   }
 
+  function valideer(w) {
+    var fouten = {};
+    if (!w.klantnaam) fouten.klantnaam = "Vul de klantnaam in.";
+    if (!w.bedrijfsnaam) fouten.bedrijfsnaam = "Vul de bedrijfsnaam in.";
+    if (!w.email) fouten.email = "Vul een e-mailadres in.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(w.email)) fouten.email = "Dit e-mailadres lijkt niet te kloppen. Gebruik bijvoorbeeld naam@bedrijf.nl.";
+    if (w.bedragRaw === "" || isNaN(w.bedrag)) fouten.bedrag = "Vul het offertebedrag in.";
+    else if (w.bedrag < 0) fouten.bedrag = "Het bedrag mag niet negatief zijn.";
+    if (!w.offertedatum) fouten.offertedatum = "Kies de offertedatum.";
+    if (!w.opvolgdatum) fouten.opvolgdatum = "Kies de opvolgdatum.";
+    else if (w.offertedatum && w.opvolgdatum < w.offertedatum) fouten.opvolgdatum = "De opvolgdatum mag niet vóór de offertedatum liggen.";
+
+    var eerste = null;
+    VELDEN.forEach(function (id) {
+      zetVeldFout(id, fouten[id] || "");
+      if (fouten[id] && !eerste) eerste = id;
+    });
+    return eerste;
+  }
+
+  function zetBezig(knopEl, bezig) {
+    var label = knopEl.querySelector(".btn-label");
+    if (bezig) {
+      knopEl.setAttribute("aria-busy", "true");
+      knopEl.disabled = true;
+      label.textContent = "Opslaan…";
+    } else {
+      knopEl.removeAttribute("aria-busy");
+      knopEl.disabled = false;
+      label.textContent = "Offerte toevoegen";
+    }
+  }
+
+  VELDEN.forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () { zetVeldFout(id, ""); });
+  });
+
   el.form.addEventListener("submit", function (e) {
     e.preventDefault();
-    var klantnaam = document.getElementById("klantnaam").value.trim();
-    var bedrijfsnaam = document.getElementById("bedrijfsnaam").value.trim();
-    var email = document.getElementById("email").value.trim();
     var bedragRaw = document.getElementById("bedrag").value;
-    var offertedatum = document.getElementById("offertedatum").value;
-    var opvolgdatum = document.getElementById("opvolgdatum").value;
-    var bedrag = parseFloat(bedragRaw);
+    var w = {
+      klantnaam: document.getElementById("klantnaam").value.trim(),
+      bedrijfsnaam: document.getElementById("bedrijfsnaam").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      bedragRaw: bedragRaw,
+      bedrag: parseFloat(bedragRaw),
+      offertedatum: document.getElementById("offertedatum").value,
+      opvolgdatum: document.getElementById("opvolgdatum").value,
+      status: document.getElementById("nieuweStatus").value
+    };
+    if (STATUSSEN.indexOf(w.status) === -1) w.status = "Verstuurd";
 
-    var fout = "";
-    if (!klantnaam || !bedrijfsnaam || !email || bedragRaw === "" || !offertedatum || !opvolgdatum) {
-      fout = "Vul alle velden in.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      fout = "Dit e-mailadres lijkt niet te kloppen.";
-    } else if (isNaN(bedrag) || bedrag < 0) {
-      fout = "Vul een geldig bedrag in (0 of hoger).";
-    } else if (opvolgdatum < offertedatum) {
-      fout = "De opvolgdatum mag niet vóór de offertedatum liggen.";
-    }
-    if (fout) { el.formError.textContent = fout; return; }
+    var eerste = valideer(w);
+    if (eerste) { document.getElementById(eerste).focus(); return; }
+
+    var knopEl = document.getElementById("submitBtn");
+    zetBezig(knopEl, true);
 
     offertes.push({
       id: "q-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
-      klantnaam: klantnaam, bedrijfsnaam: bedrijfsnaam, email: email,
-      bedrag: bedrag, offertedatum: offertedatum, opvolgdatum: opvolgdatum,
-      status: "Nieuw"
+      klantnaam: w.klantnaam, bedrijfsnaam: w.bedrijfsnaam, email: w.email,
+      bedrag: w.bedrag, offertedatum: w.offertedatum, opvolgdatum: w.opvolgdatum,
+      status: w.status
     });
     opslaan();
     el.form.reset();
     zetStandaardDatums();
-    el.formError.textContent = "";
+    wisFouten();
     renderAlles();
-  });
-
-  /* ---------- Testgegevens herstellen ---------- */
-  document.getElementById("resetBtn").addEventListener("click", function () {
-    if (!confirm("Alle huidige gegevens vervangen door de testgegevens?")) return;
-    offertes = testgegevens();
-    opslaan();
-    renderAlles();
+    toon("Offerte voor " + w.klantnaam + " is toegevoegd.");
+    setTimeout(function () { zetBezig(knopEl, false); }, 500);
   });
 
   /* ---------- Start ---------- */
